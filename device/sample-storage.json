@@ -1,0 +1,31 @@
+{
+  "meta": {
+    start_date: [timestamp],
+    end_date: [timestamp]
+  },
+  "data": [
+    {
+      "gyro": {
+        ...
+      },
+      "gps": {
+        ...
+      },
+      "accel": {
+        ...
+      }
+    },
+    {
+      "gyro": {
+        ...
+      },
+      "gps": {
+        ...
+      },
+      "accel": {
+        ...
+      }
+    },
+    ...
+  ]
+}
