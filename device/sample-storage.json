@@ -5,6 +5,7 @@
   },
   "data": [
     {
+      "timestamp" : [timestamp],
       "gyro": {
         ...
       },
@@ -16,6 +17,7 @@
       }
     },
     {
+      "timestamp" : [timestamp],
       "gyro": {
         ...
       },
