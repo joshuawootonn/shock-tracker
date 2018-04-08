@@ -1,13 +1,22 @@
 const express = require("express");
 const router = express.Router();
 
+const sessionController = require("../controllers/session");
 router.get("/sessions", (req, res) => {
-  res.send("all the sessions");
+  sessionController.getAll(req, res);
 });
 router
   .route("/session")
-  .get((req, res) => {res.send("a session");})
-  .post((req, res) => {})
-  .put((req, res) => {})
-  .delete((req, res) => {});
+  .get((req, res) => {
+    sessionController.get(req, res);
+  })
+  .post((req, res) => {
+    sessionController.post(req, res);
+  })
+  .put((req, res) => {
+    sessionController.put(req, res);
+  })
+  .delete((req, res) => {
+    sessionController.delete(req, res);
+  });
 module.exports = router;
