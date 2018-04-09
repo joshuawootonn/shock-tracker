@@ -5,13 +5,13 @@ const sessionController = require("../controllers/session");
 router.get("/sessions", (req, res) => {
   sessionController.getAll(req, res);
 });
+router.route("/session").post((req, res) => {
+  sessionController.post(req, res);
+});
 router
-  .route("/session")
+  .route("/session/:id")
   .get((req, res) => {
     sessionController.get(req, res);
-  })
-  .post((req, res) => {
-    sessionController.post(req, res);
   })
   .put((req, res) => {
     sessionController.put(req, res);
