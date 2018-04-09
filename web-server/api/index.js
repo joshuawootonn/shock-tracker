@@ -1,5 +1,8 @@
 var express = require("express");
 var app = express();
+var bodyParser = require("body-parser");
+
+app.use(bodyParser());
 // Our handler function is passed a request and response object
 app.get('/api/', (req, res) => res.send('Hello World!'))
 app.use('/api/',require('./routes/user'));
