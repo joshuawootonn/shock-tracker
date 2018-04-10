@@ -31,8 +31,7 @@ exports.get = (req, res) => {
   );
 };
 
-exports.post = (req, res) => {
- 
+exports.post = (req, res) => { 
   connection.query(
     `INSERT INTO user (create_time,update_time,user_name) VALUES (now(),now(),'${req
       .body.user_name}')`,
@@ -52,11 +51,13 @@ exports.put = (req, res) => {
   }
   let update = "";
   Object.keys(req.body).forEach((key, index) => {
-    if (Object.keys(req.body).length !== index + 1)
+    
       update = ` ${update} ${key}="${req.body[key]}", `;
-    else update = ` ${update} ${key}="${req.body[key]}" `;
   });
+  console.log(req.body);
+  update = ` ${update} update_time=now() `;
 
+  console.log(update);
   connection.query(
     `update user set ${update} where id=${req.params.id}`,
     (err, rows, fields) => {
