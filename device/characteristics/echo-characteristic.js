@@ -7,7 +7,7 @@ var BlenoCharacteristic = bleno.Characteristic;
 var EchoCharacteristic = function () {
 	EchoCharacteristic.super_.call(this, {
 		uuid: 'fffffffffffffffffffffffffffffff1',
-		properties: ['read'],
+		properties: ['read', 'write', 'notify'],
 		value: new Buffer("asdf")
 	});
 };
@@ -15,7 +15,7 @@ var EchoCharacteristic = function () {
 util.inherits(EchoCharacteristic, BlenoCharacteristic);
 
 EchoCharacteristic.prototype.onReadRequest = function(offset, callback) {
-    console.log("onREAD");
+	console.log("onREAD");
     this._value = fs.readFile('./sample-sessions/2018-04-09a.json');
     console.log('EchoCharacteristic -- onReadRequest: value = ' + this._value);
     callback(this.RESULT_SUCCESS, this._value);
@@ -35,10 +35,10 @@ EchoCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResp
 };
 
 EchoCharacteristic.prototype.onSubscribe = function(maxValueSize, updateValueCallback) {
-    console.log("onSUBSCRIBE");
+	console.log("onSUBSCRIBE");
 	console.log('EchoCharacteristic -- onSubscribe');
 	this._updateValueCallback = updateValueCallback;
-    callback(this.RESULT_SUCCESS);
+	callback(this.RESULT_SUCCESS);
 };
 
 EchoCharacteristic.prototype.onUnsubscribe = function() {

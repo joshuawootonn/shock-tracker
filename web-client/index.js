@@ -1,6 +1,6 @@
 var http = require('http');
 var express = require('express');
-var firebase = require('firebase');
+var firebaseui = require('firebaseui');
 var fs = require('fs');
 
 http.createServer( function(request, response) {
