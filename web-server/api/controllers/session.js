@@ -42,17 +42,80 @@ exports.post = (req, res) => {
   );
 };
 
-exports.getByUser = (req, res) => {};
+exports.getByUser = (req, res) => {
+  if (!req.params.id) {
+    res.status(500).send({ message: "Provide an id is your request params" });
+  }
+  connection.query(
+    `SELECT * FROM session WHERE user_id='${req.params.id}'`,
+    (err, rows1, fields) => {
+      if (err) {
+        res.status(500).send({ message: "User access error" });
+      } else {
+        let total = [];
+        rows1.forEach((element, i) => {
+          connection.query(
+            `SELECT * FROM data WHERE session_id='${element.id}'`,
+            (err, rows2, fields) => {
+              element = JSON.parse(JSON.stringify(element));
+              rows2 = JSON.parse(JSON.stringify(rows2));
+              let asdf = {};
+              asdf = { ...asdf, ...element };
+              asdf["data"] = rows2.reduce(function(acc, cur, i) {
+                acc[i] = cur;
+                return acc;
+              }, {});
+              total.push(asdf);
+              console.log(total);
+              if (rows1.length - 1 === i) {
+                //console.log(total);
+                res.setHeader("Content-Type", "application/json");
+                res.status(200).send(JSON.stringify(total));
+              }
+            }
+          );
+        });
+      }
+    }
+  );
+};
 
 exports.getAll = (req, res) => {
-  connection.query(`SELECT * FROM session`, (err, rows, fields) => {
-    if (err) {
-      res.status(500).send({ message: "User access error" });
-    } else {
-      res.setHeader("Content-Type", "application/json");
-      res.status(200).send(JSON.stringify(rows));
+
+  
+  connection.query(
+    `SELECT * FROM session`,
+    (err, rows1, fields) => {
+      if (err) {
+        res.status(500).send({ message: "User access error" });
+      } else {
+        let total = [];
+        rows1.forEach((element, i) => {
+          connection.query(
+            `SELECT * FROM data WHERE session_id='${element.id}'`,
+            (err, rows2, fields) => {
+              element = JSON.parse(JSON.stringify(element));
+              rows2 = JSON.parse(JSON.stringify(rows2));
+              let asdf = {};
+              asdf = { ...asdf, ...element };
+              asdf["data"] = rows2.reduce(function(acc, cur, i) {
+                acc[i] = cur;
+                return acc;
+              }, {});
+              total.push(asdf);
+              console.log(total);
+              if (rows1.length - 1 === i) {
+                //console.log(total);
+                res.setHeader("Content-Type", "application/json");
+                res.status(200).send(JSON.stringify(total));
+              }
+            }
+          );
+        });
+      }
     }
-  });
+  );
+  
 };
 exports.get = (req, res) => {
   if (!req.params.id) {
@@ -64,18 +127,19 @@ exports.get = (req, res) => {
       if (err) {
         res.status(500).send({ message: "User access error" });
       } else {
+        console.log(rows1);
         rows1.forEach(element => {
           connection.query(
             `SELECT * FROM data WHERE session_id='${req.params.id}'`,
             (err, rows2, fields) => {
-              rows1 = JSON.parse(JSON.stringify(rows1))
-              rows2 = JSON.parse(JSON.stringify(rows2))           
-              let asdf = {}
-              asdf = {...asdf,...rows1[0]}
+              rows1 = JSON.parse(JSON.stringify(rows1));
+              rows2 = JSON.parse(JSON.stringify(rows2));
+              let asdf = {};
+              asdf = { ...asdf, ...rows1[0] };
               asdf["data"] = rows2.reduce(function(acc, cur, i) {
                 acc[i] = cur;
                 return acc;
-              }, {});              
+              }, {});
               res.setHeader("Content-Type", "application/json");
               res.status(200).send(JSON.stringify(asdf));
             }
