@@ -1,0 +1,41 @@
+{
+  "start_time": "0000-00-00 00:00:00",
+  "end_time": "0000-00-00 00:00:00",
+  "data": [
+    {
+      "time_stamp" : "0000-00-00 00:00:00",
+      "gyro": {
+        "roll": 23.3934,
+        "pitch": 2.3933,
+        "yaw": -77.0022
+      },
+      "gps": {
+        "longitude": 40.09394,
+        "latitude": 93.94922
+      },
+      "accel": {
+        "x": 0.3034,
+        "y": 9.2920,
+        "z": -23.3949
+      }
+    },
+    {
+      "time_stamp" : "0000-00-00 00:00:00",
+      "gyro": {
+        "roll": 23.3934,
+        "pitch": 2.3933,
+        "yaw": -77.0022
+      },
+      "gps": {
+        "longitude": 40.09394,
+        "latitude": 93.94922
+      },
+      "accel": {
+        "x": 0.3034,
+        "y": 9.2920,
+        "z": -23.3949
+      }
+    }
+  ]
+}
+// format of the time stamps should be YYYY-MM-DD HH:MM:SS
