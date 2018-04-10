@@ -33,8 +33,8 @@ exports.get = (req, res) => {
 
 exports.post = (req, res) => { 
   connection.query(
-    `INSERT INTO user (create_time,update_time,user_name) VALUES (now(),now(),'${req
-      .body.user_name}')`,
+    `INSERT INTO user (create_time,update_time,user_name,uuid) VALUES (now(),now(),'${req
+      .body.user_name}','${req.body.uuid}')`,
     (err, rows, fields) => {
       if (err) {
         res.status(500).send({message: "User creation error"});
@@ -50,8 +50,7 @@ exports.put = (req, res) => {
     res.status(500).send({message:"Provide an id is your request params"})
   }
   let update = "";
-  Object.keys(req.body).forEach((key, index) => {
-    
+  Object.keys(req.body).forEach((key, index) => {    
       update = ` ${update} ${key}="${req.body[key]}", `;
   });
   console.log(req.body);
