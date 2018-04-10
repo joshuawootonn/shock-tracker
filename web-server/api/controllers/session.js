@@ -17,12 +17,12 @@ exports.post = (req, res) => {
   connection.query(
     `INSERT INTO session (user_id,start_time,end_time) VALUES ('${req.body
       .user_id}','${req.body.start_time}','${req.body.end_time}')`,
-    (err, rows, fields) => {
+    (err, rows1, fields) => {
       if (err) {
         res.status(500).send({ message: "Session creation error" });
         return;
       }
-      sessionId = rows.insertId;
+      sessionId = rows1.insertId;
       req.body.data.forEach(ele => {
         queries.push(`INSERT INTO data (session_id,session_user_id,time_stamp,roll,pitch,yaw,longitude,latitude,x,y,z)
       VALUES ('${sessionId}','${req.body.user_id}','${ele.timestamp}','${ele
@@ -35,7 +35,8 @@ exports.post = (req, res) => {
           res.status(500).send({ message: "Data creation error" });
           throw err;
         } else {
-          res.status(200).send({ message: "Data created successfully" });
+          res.status(200).send({ message: "Session/Data created successfully",
+          id:sessionId });
         }
       });
     }
@@ -66,7 +67,6 @@ exports.getByUser = (req, res) => {
                 return acc;
               }, {});
               total.push(asdf);
-              console.log(total);
               if (rows1.length - 1 === i) {
                 //console.log(total);
                 res.setHeader("Content-Type", "application/json");
@@ -80,9 +80,7 @@ exports.getByUser = (req, res) => {
   );
 };
 
-exports.getAll = (req, res) => {
-
-  
+exports.getAll = (req, res) => {  
   connection.query(
     `SELECT * FROM session`,
     (err, rows1, fields) => {
@@ -103,7 +101,6 @@ exports.getAll = (req, res) => {
                 return acc;
               }, {});
               total.push(asdf);
-              console.log(total);
               if (rows1.length - 1 === i) {
                 //console.log(total);
                 res.setHeader("Content-Type", "application/json");
@@ -125,8 +122,9 @@ exports.get = (req, res) => {
     `SELECT * FROM session WHERE id='${req.params.id}'`,
     (err, rows1, fields) => {
       if (err) {
-        res.status(500).send({ message: "User access error" });
-      } else {
+        res.status(500).send({ message: "Session access error" });
+      } 
+      else {
         console.log(rows1);
         rows1.forEach(element => {
           connection.query(
@@ -142,6 +140,7 @@ exports.get = (req, res) => {
               }, {});
               res.setHeader("Content-Type", "application/json");
               res.status(200).send(JSON.stringify(asdf));
+            
             }
           );
         });
@@ -163,6 +162,7 @@ exports.delete = (req, res) => {
       res.status(500).send({ message: "User deletion error" });
       console.log(err);
     } else {
+      console.log(err,rows,fields);
       res.status(200).send({ message: "User deleted successfully" });
     }
   });

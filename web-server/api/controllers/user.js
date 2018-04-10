@@ -63,24 +63,21 @@ exports.put = (req, res) => {
   Object.keys(req.body).forEach((key, index) => {    
       update = ` ${update} ${key}="${req.body[key]}", `;
   });
-  console.log(req.body);
   update = ` ${update} update_time=now() `;
 
-  console.log(update);
   connection.query(
     `update user set ${update} where id=${req.params.id}`,
     (err, rows, fields) => {
+      console.log(rows);
       if (err) {
         res.status(500).send({message: "User update error"});
       }
       else{
         connection.query(`SELECT * FROM user WHERE id=${req.params.id}`, (err, rows2, fields) => {
           if (err) {
-            console.log(err);
             res.status(500).send({message: "User was updated but there was an error retreiving them"});
           }
           else{
-            console.log(rows2)
             res.setHeader("Content-Type", "application/json");
             res.status(200).send(JSON.stringify(rows2[0]));
           }
