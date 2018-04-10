@@ -8,23 +8,32 @@ var EchoCharacteristic = function () {
 	EchoCharacteristic.super_.call(this, {
 		uuid: 'fffffffffffffffffffffffffffffff1',
 		properties: ['read', 'write', 'notify'],
-		value: new Buffer("asdf")
+		value: null
 	});
 };
 
 util.inherits(EchoCharacteristic, BlenoCharacteristic);
 
 EchoCharacteristic.prototype.onReadRequest = function(offset, callback) {
-	console.log("onREAD");
-    this._value = fs.readFile('./sample-sessions/2018-04-09a.json');
-    console.log('EchoCharacteristic -- onReadRequest: value = ' + this._value);
-    callback(this.RESULT_SUCCESS, this._value);
+    // read most recent session file and send it
+    fs.readFile('./sample-sessions/2018-04-09a.json', 'utf8', function(err, data) {
+        if (err) {
+            throw err;
+        } else {
+            this._value = data;
+            console.log('EchoCharacteristic -- onReadRequest: value = ' + this._value);
+            callback(this.RESULT_SUCCESS, this._value);
+        }
+
+    });
 };
 
 EchoCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
-    console.log("onWRITE");
-	this._value = data;
-	console.log('EchoCharacteristic -- onWriteRequest: value = ' + this._value.toString('hex'));
+    console.log('EchoCharacteristic -- onWriteRequest: value = ' + data);
+
+    // handle recieved data here
+    
+    this._value = data;
 
 	if (this._updateValueCallback) {
 		console.log('EchoCharacteristic -- onWriteRequest: notifying');
@@ -35,14 +44,12 @@ EchoCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResp
 };
 
 EchoCharacteristic.prototype.onSubscribe = function(maxValueSize, updateValueCallback) {
-	console.log("onSUBSCRIBE");
 	console.log('EchoCharacteristic -- onSubscribe');
 	this._updateValueCallback = updateValueCallback;
 	callback(this.RESULT_SUCCESS);
 };
 
 EchoCharacteristic.prototype.onUnsubscribe = function() {
-    console.log("onUNSUBSCRIBE");
 	console.log('EchoCharacteristic -- onUnsubscribe');
 	this._updateValueCallback = null;
 };
