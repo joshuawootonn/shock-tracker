@@ -42,7 +42,6 @@ exports.post = (req, res) => {
       else{        
         connection.query(`SELECT * FROM user WHERE id=${rows.insertId}`, (err, rows2, fields) => {
           if (err) {
-            console.log(err);
             res.status(500).send({message: "User was created but there was an error retreiving them"});
           }
           else{
@@ -68,7 +67,6 @@ exports.put = (req, res) => {
   connection.query(
     `update user set ${update} where id=${req.params.id}`,
     (err, rows, fields) => {
-      console.log(rows);
       if (err) {
         res.status(500).send({message: "User update error"});
       }
@@ -92,11 +90,9 @@ exports.delete = (req, res) => {
   }
   connection.query(`SELECT * FROM user WHERE id=${req.params.id}`, (err, rows, fields) => {
     if (err) {
-      console.log(err);
       res.status(500).send({message: "There was an error in your request"});
     }
     else{
-      console.log(rows);
       connection.query(
         `delete from user where id=${req.params.id}`,
         (err2, rows2, fields) => {
