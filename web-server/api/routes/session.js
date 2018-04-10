@@ -13,10 +13,10 @@ router
   .get((req, res) => {
     sessionController.get(req, res);
   })
-  .put((req, res) => {
-    sessionController.put(req, res);
-  })
   .delete((req, res) => {
     sessionController.delete(req, res);
   });
+router.route("/session/byUser/:id").get((req, res) => {
+  sessionController.getByUser(req, res);
+});
 module.exports = router;
