@@ -3,7 +3,8 @@ var connection = mysql.createConnection({
   host     : 'iot4.cvxj8o1t0txz.us-east-1.rds.amazonaws.com',
   user     : 'joshua',
   password : 'Nicethiccboys!', // don't judge me
-  database : 'IOT4'
+  database : 'IOT4',
+  multipleStatements: true
 });
 
 module.exports = connection;
