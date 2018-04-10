@@ -1,6 +1,7 @@
 var bleno = require('bleno');
 var BlenoPrimaryService = bleno.PrimaryService;
 var EchoCharacteristic = require('./characteristics/echo-characteristic');
+var Descriptor = bleno.Descriptor;
 
 var devicename = 'shockIOT';
 var deviceuuid = ['B8:27:EB:27:65:9B'];
@@ -21,7 +22,7 @@ bleno.on('advertisingStart', function(error) {
 	if (!error) {
 		bleno.setServices([
 			new BlenoPrimaryService({
-				uuid: 'B8:27:EB:27:65:9B',
+				uuid: deviceuuid[0],
 				characteristics: [
 					new EchoCharacteristic()
 				]
@@ -31,6 +32,5 @@ bleno.on('advertisingStart', function(error) {
 });
 
 bleno.on('accept', function(clientAddr) {
-    console.log('on -> accept client address: ' + clientAddr);
-    
+    console.log('on -> accept client address: ' + clientAddr);    
 });
