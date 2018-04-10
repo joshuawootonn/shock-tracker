@@ -4,54 +4,54 @@ var fs = require('fs');
 
 var BlenoCharacteristic = bleno.Characteristic;
 
-var EchoCharacteristic = function () {
-	EchoCharacteristic.super_.call(this, {
+var SendCharacteristic = function () {
+	SendCharacteristic.super_.call(this, {
 		uuid: 'fffffffffffffffffffffffffffffff1',
 		properties: ['read', 'write', 'notify'],
 		value: null
 	});
 };
 
-util.inherits(EchoCharacteristic, BlenoCharacteristic);
+util.inherits(SendCharacteristic, BlenoCharacteristic);
 
-EchoCharacteristic.prototype.onReadRequest = function(offset, callback) {
+SendCharacteristic.prototype.onReadRequest = function(offset, callback) {
     // read most recent session file and send it
     fs.readFile('./sample-sessions/2018-04-09a.json', 'utf8', function(err, data) {
         if (err) {
             throw err;
         } else {
             this._value = data;
-            console.log('EchoCharacteristic -- onReadRequest: value = ' + this._value);
+            console.log('SendCharacteristic -- onReadRequest: value = ' + this._value);
             callback(this.RESULT_SUCCESS, this._value);
         }
 
     });
 };
 
-EchoCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
-    console.log('EchoCharacteristic -- onWriteRequest: value = ' + data);
+SendCharacteristic.prototype.onWriteRequest = function(data, offset, withoutResponse, callback) {
+    console.log('SendCharacteristic -- onWriteRequest: value = ' + data);
 
     // handle recieved data here
-    
+
     this._value = data;
 
 	if (this._updateValueCallback) {
-		console.log('EchoCharacteristic -- onWriteRequest: notifying');
+		console.log('SendCharacteristic -- onWriteRequest: notifying');
 		this._updateValueCallback(this._value);
 	}
 
 	callback(this.RESULT_SUCCESS);
 };
 
-EchoCharacteristic.prototype.onSubscribe = function(maxValueSize, updateValueCallback) {
-	console.log('EchoCharacteristic -- onSubscribe');
+SendCharacteristic.prototype.onSubscribe = function(maxValueSize, updateValueCallback) {
+	console.log('SendCharacteristic -- onSubscribe');
 	this._updateValueCallback = updateValueCallback;
 	callback(this.RESULT_SUCCESS);
 };
 
-EchoCharacteristic.prototype.onUnsubscribe = function() {
-	console.log('EchoCharacteristic -- onUnsubscribe');
+SendCharacteristic.prototype.onUnsubscribe = function() {
+	console.log('SendCharacteristic -- onUnsubscribe');
 	this._updateValueCallback = null;
 };
 
-module.exports = EchoCharacteristic;
+module.exports = SendCharacteristic;
