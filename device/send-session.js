@@ -1,6 +1,6 @@
 var bleno = require('bleno');
 var BlenoPrimaryService = bleno.PrimaryService;
-var SendCharacteristic = require('./characteristics/echo-characteristic');
+var SendCharacteristic = require('./characteristics/send-characteristic');
 var Descriptor = bleno.Descriptor;
 
 var DEVICE_NAME = 'shockIOT';
