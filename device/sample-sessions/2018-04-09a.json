@@ -1,17 +1,18 @@
 {
+    "user_id": 1234,
     "start_date": "yyyy-MM-ddThh:mm:ss",
     "end_date": "yyyy-MM-ddThh:mm:ss"
     "data": [
         {
             "timestamp": "yyyy-MM-ddThh:mm:ss",
             "gyro": {
-                "roll": 23.3934,
                 "pitch": 2.3933,
+                "roll": 23.3934,
                 "yaw": -77.0022
             },
             "gps": {
-                "lat": 40.09394,
-                "long": 93.94922
+                "latitude": 40.09394,
+                "longitude": 93.94922
             },
             "accel": {
                 "x": 0.3034,
