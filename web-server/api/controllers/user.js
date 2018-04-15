@@ -3,7 +3,7 @@ const connection = require("../mysql");
 exports.getAll = (req, res) => {
   connection.query(`SELECT * FROM user`, (err, rows, fields) => {
     if (err) {
-      res.status(500).send({message: "User access error"});
+      res.status(500).send({message: "User access error",error: err});
     }
     else{
       res.setHeader("Content-Type", "application/json");
@@ -20,7 +20,8 @@ exports.get = (req, res) => {
     `SELECT * FROM user WHERE id='${req.params.id}'`,
     (err, rows, fields) => {
       if (err) {
-        res.status(500).send({message: "User access error"});
+        res.status(500).send({message: "User access error",error: err}
+      );
       }
       else{
         res.setHeader("Content-Type", "application/json");
@@ -37,7 +38,7 @@ exports.post = (req, res) => {
       .body.user_name}','${req.body.uuid}')`,
     (err, rows, fields) => {
       if (err) {
-        res.status(500).send({message: "User creation error"});
+        res.status(500).send({message: "User creation error",error: err});
       }
       else{        
         connection.query(`SELECT * FROM user WHERE id=${rows.insertId}`, (err, rows2, fields) => {
@@ -68,12 +69,12 @@ exports.put = (req, res) => {
     `update user set ${update} where id=${req.params.id}`,
     (err, rows, fields) => {
       if (err) {
-        res.status(500).send({message: "User update error"});
+        res.status(500).send({message: "User update error",error: err});
       }
       else{
         connection.query(`SELECT * FROM user WHERE id=${req.params.id}`, (err, rows2, fields) => {
           if (err) {
-            res.status(500).send({message: "User was updated but there was an error retreiving them"});
+            res.status(500).send({message: "User was updated but there was an error retreiving them",error: err});
           }
           else{
             res.setHeader("Content-Type", "application/json");
@@ -90,14 +91,14 @@ exports.delete = (req, res) => {
   }
   connection.query(`SELECT * FROM user WHERE id=${req.params.id}`, (err, rows, fields) => {
     if (err) {
-      res.status(500).send({message: "There was an error in your request"});
+      res.status(500).send({message: "There was an error in your request",error: err});
     }
     else{
       connection.query(
         `delete from user where id=${req.params.id}`,
         (err2, rows2, fields) => {
           if (err2) {
-            res.status(500).send({message: "User deletion error"});
+            res.status(500).send({message: "User deletion error",error: err});
           }
           else{
             res.setHeader("Content-Type", "application/json");
