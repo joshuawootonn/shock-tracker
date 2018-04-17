@@ -14,23 +14,59 @@ var session = {
 
 function getReadings() {
     var imudata = IMU.getValueSync();
-    session.data.push({
-        timestamp: moment().format(DATE_FORMAT),
-        gyro: {
-            pitch: imudata.gyro.x,
-            roll: imudata.gyro.y,
-            yaw: imudata.gyro.z,
-        },
-        gps: {
-            latitude: null,
-            longitude: null,
-        },
-        accel: {
-            x: imudata.accel.x,
-            y: imudata.accel.y,
-            z: imudata.accel.z
-        }
-    });
+    var ts = moment().format(DATE_FORMAT);
+
+    if (shouldPersist(imudata, ts)) {
+        session.data.push({
+            timestamp: ts,
+            gyro: {
+                pitch: imudata.gyro.x,
+                roll: imudata.gyro.y,
+                yaw: imudata.gyro.z,
+            },
+            gps: {
+                latitude: null,
+                longitude: null,
+            },
+            accel: {
+                x: imudata.accel.x,
+                y: imudata.accel.y,
+                z: imudata.accel.z
+            }
+        });
+    }
+}
+
+function shouldPersist(imudata, ts) {
+
+    // if 5 or more seconds have passed since last recorded reading
+    // save it
+    if (ts.diff(session.data.slice(-1).timestamp, 'seconds') >= 5) {
+        return true;
+    }
+
+    // if the current reading is >10% off of any of the 5 previous readings
+    // then save the reading as it is a relevant data point
+    if (session.data.length >= 5) {
+        session.data.slice(-5).forEach(function (d, i) {
+            // relative differences
+            pitchDiff = Math.abs(d.gyro.x, imudata.gyro.x) / d.gyro.x;
+            rollDiff = Math.abs(d.gyro.y, imudata.gyro.y) / d.gyro.y;
+            yawDiff = Math.abs(d.gyro.z, imudata.gyro.z) / d.gryo.z;
+
+            xdiff = Math.abs(d.accel.x, imudata.accel.x) / d.accel.x;
+            ydiff = Math.abs(d.accel.y, imudata.accel.y) / d.accel.y;
+            zdiff = Math.abs(d.accel.z, imudata.accel.z) / d.accel.z;
+
+            // if greatest relative difference is > 10% then save
+            maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff);
+            if (maxdiff > 1.10) {
+                return true;
+            }
+        });
+    }
+
+    return false;
 }
 
 function exitHandler() {
