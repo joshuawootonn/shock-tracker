@@ -19,7 +19,7 @@ exports.post = (req, res) => {
       .user_id}','${req.body.start_time}','${req.body.end_time}')`,
     (err, rows1, fields) => {
       if (err) {
-        res.status(500).send({ message: "Session creation error" });
+        res.status(500).send({ message: "Session creation error",error: err });
         return;
       }
       sessionId = rows1.insertId;
@@ -32,7 +32,7 @@ exports.post = (req, res) => {
       });
       connection.query(queries.join("; "), (err, rows, fields) => {
         if (err) {
-          res.status(500).send({ message: "Data creation error" });
+          res.status(500).send({ message: "Data creation error",error: err });
           throw err;
         } else {
           res.status(200).send({ message: "Session/Data created successfully",
@@ -51,7 +51,7 @@ exports.getByUser = (req, res) => {
     `SELECT * FROM session WHERE user_id='${req.params.id}'`,
     (err, rows1, fields) => {
       if (err) {
-        res.status(500).send({ message: "User access error" });
+        res.status(500).send({ message: "User access error" ,error: err});
       } else {
         let total = [];
         rows1.forEach((element, i) => {
@@ -60,8 +60,7 @@ exports.getByUser = (req, res) => {
             (err, rows2, fields) => {
               element = JSON.parse(JSON.stringify(element));
               rows2 = JSON.parse(JSON.stringify(rows2));
-              let asdf = {};
-              asdf = { ...asdf, ...element };
+              let asdf = Object.assign({},element);
               asdf["data"] = rows2.reduce(function(acc, cur, i) {
                 acc[i] = cur;
                 return acc;
@@ -85,7 +84,7 @@ exports.getAll = (req, res) => {
     `SELECT * FROM session`,
     (err, rows1, fields) => {
       if (err) {
-        res.status(500).send({ message: "User access error" });
+        res.status(500).send({ message: "User access error" ,error: err});
       } else {
         let total = [];
         rows1.forEach((element, i) => {
@@ -94,8 +93,8 @@ exports.getAll = (req, res) => {
             (err, rows2, fields) => {
               element = JSON.parse(JSON.stringify(element));
               rows2 = JSON.parse(JSON.stringify(rows2));
-              let asdf = {};
-              asdf = { ...asdf, ...element };
+              
+              let asdf = Object.assign({},element);
               asdf["data"] = rows2.reduce(function(acc, cur, i) {
                 acc[i] = cur;
                 return acc;
@@ -122,7 +121,7 @@ exports.get = (req, res) => {
     `SELECT * FROM session WHERE id='${req.params.id}'`,
     (err, rows1, fields) => {
       if (err) {
-        res.status(500).send({ message: "Session access error" });
+        res.status(500).send({ message: "Session access error" ,error: err});
       } 
       else {
         console.log(rows1);
@@ -132,8 +131,8 @@ exports.get = (req, res) => {
             (err, rows2, fields) => {
               rows1 = JSON.parse(JSON.stringify(rows1));
               rows2 = JSON.parse(JSON.stringify(rows2));
-              let asdf = {};
-              asdf = { ...asdf, ...rows1[0] };
+           
+              let asdf = Object.assign({},rows1[0]);
               asdf["data"] = rows2.reduce(function(acc, cur, i) {
                 acc[i] = cur;
                 return acc;
@@ -159,7 +158,7 @@ exports.delete = (req, res) => {
 
   connection.query(queries.join("; "), (err, rows, fields) => {
     if (err) {
-      res.status(500).send({ message: "User deletion error" });
+      res.status(500).send({ message: "User deletion error" ,error: err});
       console.log(err);
     } else {
       console.log(err,rows,fields);
