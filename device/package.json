@@ -12,7 +12,6 @@
     "bleno": "^0.5.0",
     "jsonfile": "^4.0.0",
     "moment": "^2.22.0",
-    "nodeimu": "^2.1.9",
-    "nodimu": "2.1.9"
+    "nodeimu": "^2.1.9"
   }
 }

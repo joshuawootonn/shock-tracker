@@ -35,8 +35,6 @@ function getReadings() {
                 z: imudata.accel.z
             }
         });
-    } else {
-        console.log("ignoring data @ " + ts.format("HH:mm:ss"));
     }
 }
 
@@ -44,64 +42,31 @@ function shouldPersist(imudata, ts) {
 
     // if 5 or more seconds have passed since last recorded reading
     // save it
-    if (ts.diff(session.data.slice(-1).timestamp, 'seconds') >= 5) {
-        return true;
+    if (session.data.length > 0) { 
+        if (ts.diff(session.data[session.data.length - 1].timestamp, 'seconds') >= 5) {
+            return true;
+        }
     }
 
     // if the current reading is >10% off of any of the 5 previous readings
     // then save the reading as it is a relevant data point
     if (session.data.length >= 5) {
         session.data.slice(-1).forEach(function (d, i) {
-
-            console.log(d);
-            
-            var newobj = {
-                timestamp: ts,
-                gyro: {
-                    pitch: imudata.gyro.x,
-                    roll: imudata.gyro.y,
-                    yaw: imudata.gyro.z
-                },
-                gps: {
-                    latitude: null,
-                    longitude: null
-                },
-                accel: {
-                    x: imudata.accel.x,
-                    y: imudata.accel.y,
-                    z: imudata.accel.z
-                }
-            };
-
-            console.log(newobj);
-            console.log('');
-            console.log('');
-
             // relative differences
-            console.log(typeof d.gyro.pitch);
-            console.log(typeof imudata.gyro.x);
             pitchDiff = Math.abs(d.gyro.pitch - imudata.gyro.x) / d.gyro.pitch;
-            console.log('pitchDiff ' + pitchDiff);
             rollDiff = Math.abs(d.gyro.roll - imudata.gyro.y) / d.gyro.roll;
-            console.log('rollDiff ' + rollDiff);
             yawDiff = Math.abs(d.gyro.yaw - imudata.gyro.z) / d.gyro.yaw;
-            console.log('yawDiff ' + yawDiff);
 
-            xdiff = Math.abs(d.accel.x, imudata.accel.x) / d.accel.x;
-            console.log('xdiff ' + xdiff);
-            ydiff = Math.abs(d.accel.y, imudata.accel.y) / d.accel.y;
-            console.log('ydiff ' + ydiff);
-            zdiff = Math.abs(d.accel.z, imudata.accel.z) / d.accel.z;
-            console.log('zdiff ' + zdiff); 
+            xdiff = Math.abs(d.accel.x - imudata.accel.x) / d.accel.x;
+            ydiff = Math.abs(d.accel.y - imudata.accel.y) / d.accel.y;
+            zdiff = Math.abs(d.accel.z - imudata.accel.z) / d.accel.z; 
 
             // if greatest relative difference is > 10% then save
-            maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff);
-            console.log('');
-            console.log('maxdiff ' + maxdiff); 
-            if (maxdiff > 1.10) {
-                return true;
-            }
+            maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff); 
         });
+        if (maxdiff > 1.8) {
+            return true;
+        }
     } else {
         return true;
     }
