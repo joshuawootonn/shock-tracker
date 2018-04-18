@@ -3,6 +3,15 @@
 ### Overview
   - Small computing device to record data and send to a paired phone when session is complete
 
+### Bluetooth Terminology
+Central: the device with more computing power  
+Peripheral: the less powerful device
+
+Client: the device that wants information  
+Server: the device which has information it wishes to share
+
+In our case: IoT device is Peripheral/Server; Phone is Central/Client
+
 ### Technologies
 ###### Hardware
   - Raspberry Pi
@@ -12,9 +21,8 @@
   - Waterproof case
 
 ###### Software
-  - Minibian (minimal raspbian-based distro)
-  - Python library for raspberry pi bluetooth connectivity
-  - or `pi-bluetooth` package for bluetooth connectivity
+  - Raspbian strech lite
+  - Node.js & node `bleno` library
 
 ### Data Collection
 Records the following data points at intervals of 0.25s:

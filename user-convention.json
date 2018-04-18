@@ -1,0 +1,8 @@
+{
+  "user_name": "joshua wootonn",
+  "uuid": 43525234523453
+}
+
+// uuid would be the auth id we would get from them logging in to firebase
+// when they login their device would receive their uuid and then 
+// it could get their user data from our database based on this uuid
