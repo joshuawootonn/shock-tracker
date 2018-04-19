@@ -1,3 +1,5 @@
+# Base URL for all online queries is http://iot4-env-1.us-east-1.elasticbeanstalk.com/
+
 # user
 ### get all
 This request allows you to get a array of all the users

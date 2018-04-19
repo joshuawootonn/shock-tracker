@@ -35,7 +35,7 @@ const axios = require("axios");
 //post
 
 // axios
-//   .post("http://localhost:3000/api/session", {
+//   .post("http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session", {
 //     user_id: "2",
 //     start_time: "now()",
 //     end_time: "now()",
