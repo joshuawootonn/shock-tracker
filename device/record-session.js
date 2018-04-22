@@ -2,15 +2,34 @@ var nodeimu = require('nodeimu');
 var moment = require('moment');
 var fs = require('fs');
 var jsonfile = require('jsonfile');
+var serialport = require('serialport');
 
 var IMU = new nodeimu.IMU();
+var serial = new serialport('/dev/ttyUSB0', { baudRate: 115200 });
+
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+
+var hasLocation = false;
+var lat_reading = 0;
+var lon_reading = 0;
 
 var session = {
     start_time: moment().format(DATE_FORMAT),
     end_time: null,
     data: []
 }
+
+serial.on('open', function() {
+    console.log('Serial connection opened');
+    serial.on('data', function(data) {
+        hasLocation = true;
+        console.log('data.toString(): ' + data.toString());
+        latlon = data.toString().split(',');
+        console.log(latlon[0] + ',' + latlon[1]);
+        lat_reading = parseFloat(latlon[0]);
+        lon_reading = parseFloat(latlon[1]);
+    });
+});
 
 function getReadings() {
     var imudata = IMU.getValueSync();
@@ -26,8 +45,8 @@ function getReadings() {
                 yaw: imudata.gyro.z,
             },
             gps: {
-                latitude: null,
-                longitude: null,
+                latitude: lat_reading,
+                longitude: lon_reading,
             },
             accel: {
                 x: imudata.accel.x,
@@ -39,6 +58,10 @@ function getReadings() {
 }
 
 function shouldPersist(imudata, ts) {
+    
+    if (!hasLocation) {
+        return false;
+    }
 
     // if 5 or more seconds have passed since last recorded reading
     // save it
