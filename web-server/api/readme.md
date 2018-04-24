@@ -13,6 +13,21 @@ This request allows you to get a particular session by it's id
       console.log(error);
     });
 ```
+
+### get by location
+This request allows you to get sessions in an area. It requires a longitude, latitude, radius
+In this example it is pinging tiffins location and an 8 mile radius. 
+Params are longitude/latitude/radius
+```javascript
+axios.get('http://localhost:3000/api/session/byLocation/-91.6633/41.7069/8')
+  .then(function (response) {
+    console.log(response);
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+```
+
 ### get all
 This request allows you to get a list of all sessions with their data. Don't use this request lol
 ```javascript

@@ -13,7 +13,15 @@ const axios = require("axios");
 // });
 
 
+// get by location
 
+// axios.get('http://localhost:3000/api/session/byLocation/-91.6633/41.7069/8')
+//   .then(function (response) {
+//     console.log(response);
+//   })
+//   .catch(function (error) {
+//     console.log(error);
+//   });
 
 // get all
 
