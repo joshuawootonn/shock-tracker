@@ -2,7 +2,6 @@ const connection = require("../mysql");
 
 exports.post = (req, res) => {
   if (
-    !req.body.user_id ||
     !req.body.start_time ||
     !req.body.end_time ||
     !req.body.data
@@ -15,8 +14,7 @@ exports.post = (req, res) => {
   const queries = [];
   let sessionId = "";
   connection.query(
-    `INSERT INTO session (user_id,start_time,end_time) VALUES ('${req.body
-      .user_id}','${req.body.start_time}','${req.body.end_time}')`,
+    `INSERT INTO session (start_time,end_time) VALUES ('${req.body.start_time}','${req.body.end_time}')`,
     (err, rows1, fields) => {
       if (err) {
         res.status(500).send({ message: "Session creation error",error: err });
@@ -28,7 +26,7 @@ exports.post = (req, res) => {
       VALUES ('${sessionId}','${req.body.user_id}','${ele.timestamp}','${ele
           .gyro.roll}','${ele.gyro.pitch}','${ele.gyro.yaw}',
       '${ele.gps.longitude}','${ele.gps.latitude}','${ele.accel.x}','${ele.accel
-          .y}','${ele.accel.y}')`);
+          .y}','${ele.accel.z}')`);
       });
       connection.query(queries.join("; "), (err, rows, fields) => {
         if (err) {
@@ -43,21 +41,30 @@ exports.post = (req, res) => {
   );
 };
 
-exports.getByUser = (req, res) => {
-  if (!req.params.id) {
-    res.status(500).send({ message: "Provide an id is your request params" });
+exports.getByLocation = (req, res) => {
+  if (
+    !req.params.longitude ||
+    !req.params.latitude ||
+    !req.params.radius 
+  ) {
+    res
+      .status(500)
+      .send({ message: "Error: The body of your message needs longitude,latitude, and radius" });
+    return;
   }
+
+
   connection.query(
-    `SELECT * FROM session WHERE user_id='${req.params.id}'`,
+    `SELECT * FROM session`,
     (err, rows1, fields) => {
       if (err) {
-        res.status(500).send({ message: "User access error" ,error: err});
+        res.status(500).send({ message: "Session access error" ,error: err});
       } else {
         let total = [];
         rows1.forEach((element, i) => {
           connection.query(
             `SELECT * FROM data WHERE session_id='${element.id}'`,
-            (err, rows2, fields) => {
+            (err, rows2, fields) => {              
               element = JSON.parse(JSON.stringify(element));
               rows2 = JSON.parse(JSON.stringify(rows2));
               let asdf = Object.assign({},element);
@@ -65,7 +72,19 @@ exports.getByUser = (req, res) => {
                 acc[i] = cur;
                 return acc;
               }, {});
-              total.push(asdf);
+
+              if(rows2[0]){
+                let testLongitude = rows2[0].longitude;
+                let testLatitude = rows2[0].latitude;
+
+                let {longitude,latitude,radius} = req.params;
+
+                const distanceKM = getDistanceFromLatLonInKm(testLatitude,testLongitude,latitude,longitude)
+                const distanceMI = (distanceKM / 1.60934)
+                if(distanceMI <= radius)
+                total.push(asdf);
+              }
+              
               if (rows1.length - 1 === i) {
                 //console.log(total);
                 res.setHeader("Content-Type", "application/json");
@@ -78,7 +97,28 @@ exports.getByUser = (req, res) => {
     }
   );
 };
+/********************************************************/
+// Found at https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+// Much thanks to Chuck !!!
 
+function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(lat2-lat1);  // deg2rad below
+  var dLon = deg2rad(lon2-lon1); 
+  var a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+    ; 
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  var d = R * c; // Distance in km
+  return d;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI/180)
+}
+/*************************************************************/
 exports.getAll = (req, res) => {  
   connection.query(
     `SELECT * FROM session`,
