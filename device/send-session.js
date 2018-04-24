@@ -36,7 +36,30 @@ var latitudeCh = new BlenoCharacteristic({
     descriptors: [
         new BlenoDescriptor({
             uuid: '0x2AAE',
-            value = readFile()
+            value = (function readFile() {
+                if (!lastSeenDate) {
+                    return Buffer.from('null', 'utf8');
+                }
+
+                var baseDir = '/home/pi/shock-tracker/device/sessions/';
+                var date = moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss');
+                var ch = 'z';
+
+                while (1) {
+                    fs.readFile(baseDir + date.format('YYYY-MM-DD') + ch, (err, data) => {
+                        if (!err) {
+                            return Buffer.from(data, 'utf8');
+                        }
+                    });
+
+                    if (ch != 'a') {
+                        ch = String.fromCharCode(ch.charCodeAt(0) - 1);
+                    } else {
+                        date = moment(date, 'YYYY-MM-DD HH:mm:ss').subtract({ hours: 24 });
+                        ch = 'z';
+                    }
+                }
+            })()
         })
     ]
 });
