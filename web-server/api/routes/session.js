@@ -16,7 +16,7 @@ router
   .delete((req, res) => {
     sessionController.delete(req, res);
   });
-router.route("/session/byUser/:id").get((req, res) => {
-  sessionController.getByUser(req, res);
+router.route("/session/byLocation/:longitude/:latitude/:radius").get((req, res) => {
+  sessionController.getByLocation(req, res);
 });
 module.exports = router;

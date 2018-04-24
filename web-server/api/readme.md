@@ -24,17 +24,7 @@ This request allows you to get a list of all sessions with their data. Don't use
       console.log(error);
     });
 ```
-### get by user
-This request allows you to get all the sessions of a particular user. 
-```javascript
-  axios.get('http://localhost:3000/api/session/byUser/1')
-    .then(function (response) {
-      console.log(response);
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
-```
+
 ### get by location
 
 ### post

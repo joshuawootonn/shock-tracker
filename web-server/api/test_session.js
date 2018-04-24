@@ -2,26 +2,6 @@ const axios = require("axios");
 
 // USER
 
-// get all
-
-// axios.get('http://localhost:3000/api/sessions')
-//   .then(function (response) {
-//     console.log(response);
-//   })
-//   .catch(function (error) {
-//     console.log(error);
-//   });
-
-// get by user
-
-// axios.get('http://localhost:3000/api/session/byUser/1')
-//   .then(function (response) {
-//     console.log(response);
-//   })
-//   .catch(function (error) {
-//     console.log(error);
-//   });
-
 // get
 
 // axios.get('http://localhost:3000/api/session/22')
@@ -32,11 +12,20 @@ const axios = require("axios");
 //   console.log(error);
 // });
 
+// get all
+
+// axios.get('http://localhost:3000/api/sessions')
+//   .then(function (response) {
+//     console.log(response);
+//   })
+//   .catch(function (error) {
+//     console.log(error);
+//   });
+
 //post
 
 // axios
-//   .post("http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session", {
-//     user_id: "2",
+//   .post("http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session", {     
 //     start_time: "now()",
 //     end_time: "now()",
 //     data: [

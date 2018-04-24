@@ -2,7 +2,6 @@ const connection = require("../mysql");
 
 exports.post = (req, res) => {
   if (
-    !req.body.user_id ||
     !req.body.start_time ||
     !req.body.end_time ||
     !req.body.data
@@ -15,8 +14,7 @@ exports.post = (req, res) => {
   const queries = [];
   let sessionId = "";
   connection.query(
-    `INSERT INTO session (user_id,start_time,end_time) VALUES ('${req.body
-      .user_id}','${req.body.start_time}','${req.body.end_time}')`,
+    `INSERT INTO session (start_time,end_time) VALUES ('${req.body.start_time}','${req.body.end_time}')`,
     (err, rows1, fields) => {
       if (err) {
         res.status(500).send({ message: "Session creation error",error: err });
@@ -43,21 +41,30 @@ exports.post = (req, res) => {
   );
 };
 
-exports.getByUser = (req, res) => {
-  if (!req.params.id) {
-    res.status(500).send({ message: "Provide an id is your request params" });
+exports.getByLocation = (req, res) => {
+  if (
+    !req.params.longitude ||
+    !req.params.latitude ||
+    !req.params.radius 
+  ) {
+    res
+      .status(500)
+      .send({ message: "Error: The body of your message needs longitude,latitude, and radius" });
+    return;
   }
+
+
   connection.query(
-    `SELECT * FROM session WHERE user_id='${req.params.id}'`,
+    `SELECT * FROM session`,
     (err, rows1, fields) => {
       if (err) {
-        res.status(500).send({ message: "User access error" ,error: err});
+        res.status(500).send({ message: "Session access error" ,error: err});
       } else {
         let total = [];
         rows1.forEach((element, i) => {
           connection.query(
             `SELECT * FROM data WHERE session_id='${element.id}'`,
-            (err, rows2, fields) => {
+            (err, rows2, fields) => {              
               element = JSON.parse(JSON.stringify(element));
               rows2 = JSON.parse(JSON.stringify(rows2));
               let asdf = Object.assign({},element);
@@ -65,6 +72,25 @@ exports.getByUser = (req, res) => {
                 acc[i] = cur;
                 return acc;
               }, {});
+
+              if(rows2[0]){
+                let testLongitude = rows2[0].longitude;
+                let testLatitude = rows2[0].latitude;
+
+                let {longitude,latitude} = req.params;
+
+                testLongitude *= 0.0174533;
+                testLatitude *= 0.0174533;
+                longitude *= 0.0174533;
+                latitude *= 0.0174533;
+
+                const distance = 6371 * Math.acos(
+                  Math.sin(testLatitude) * Math.sin(latitude)
+                  + Math.cos(testLatitude) * Math.cos(latitude) * Math.cos(testLatitude - testLongitude))
+
+                console.log(distance);
+              }
+
               total.push(asdf);
               if (rows1.length - 1 === i) {
                 //console.log(total);
