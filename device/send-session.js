@@ -22,49 +22,32 @@ var dateTimeCh = new BlenoCharacteristic({
         })
     ],
 
-    onWriteRequest: function(data, offset, withoutResponse, callback) {
-        console.log('data: ' + data.toString());
+    onWriteRequest: function (data, offset, withoutResponse, callback) {
+        console.log('date recieved: ' + data.toString());
 
         callback(this.RESULT_SUCCESS);
     }
 
 });
 
-var latitudeCh = new BlenoCharacteristic({
+var latitudeCh = new BlenoCharacteristic ({
     uuid: '0x2AAE',
     properites: [ 'read' ],
     descriptors: [
         new BlenoDescriptor({
             uuid: '0x2AAE',
-            value = (function readFile() {
-                if (!lastSeenDate) {
-                    return Buffer.from('null', 'utf8');
-                }
-
-                var baseDir = '/home/pi/shock-tracker/device/sessions/';
-                var date = moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss');
-                var ch = 'z';
-
-                while (1) {
-                    fs.readFile(baseDir + date.format('YYYY-MM-DD') + ch, (err, data) => {
-                        if (!err) {
-                            return Buffer.from(data, 'utf8');
-                        }
-                    });
-
-                    if (ch != 'a') {
-                        ch = String.fromCharCode(ch.charCodeAt(0) - 1);
-                    } else {
-                        date = moment(date, 'YYYY-MM-DD HH:mm:ss').subtract({ hours: 24 });
-                        ch = 'z';
-                    }
-                }
-            })()
+            value = 'latitude'
         })
-    ]
+    ],
+
+    onReadRequest: function (offset, callback) {
+        data = readFile();
+        console.log('sending latitude: '  + data);
+        callback(this.RESULT_SUCCESS, Buffer.from(data, 'utf8'));
+    }
 });
 
-(function readFile() {
+function readFile () {
     if ( !lastSeenDate ) {
         return Buffer.from('null', 'utf8');
     }
@@ -76,7 +59,7 @@ var latitudeCh = new BlenoCharacteristic({
     while (1) {
         fs.readFile( baseDir + date.format('YYYY-MM-DD') + ch, (err, data) => {
             if (!err) {
-                return Buffer.from(data, 'utf8');
+                return data
             }
         });
 
@@ -87,7 +70,7 @@ var latitudeCh = new BlenoCharacteristic({
             ch = 'z';
         }
     }
-})();
+}
 
 
 bleno.on('stateChange', function(state) {
