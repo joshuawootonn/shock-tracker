@@ -6,16 +6,19 @@ var BlenoDescriptor = bleno.Descriptor;
 
 var SendCharacteristic = require('./characteristics/send-characteristic');
 
+var moment = require('moment');
+var fs = require('fs');
+
 var DEVICE_NAME = 'shockIOT';
 var DEVICE_UUID = ['B8:27:EB:27:65:9B'];
 
-var lastSeenDate = null;
+var lastSeenDate = '2018-04-24';
 var filedata = null;
 
 
 var dateTimeCh = new BlenoCharacteristic({
     uuid: '0x2A08',
-    properties: [ 'write' ],
+    properties: ['write'],
     descriptors: [
         new BlenoDescriptor({
             uuid: '0x2A08'
@@ -24,6 +27,7 @@ var dateTimeCh = new BlenoCharacteristic({
 
     onWriteRequest: function (data, offset, withoutResponse, callback) {
         console.log('date recieved: ' + data.toString());
+        lastSeenDate = data.toString();
 
         callback(this.RESULT_SUCCESS);
     }
@@ -31,19 +35,26 @@ var dateTimeCh = new BlenoCharacteristic({
 });
 
 var latitudeCh = new BlenoCharacteristic ({
-    uuid: '0x2AAE',
-    properites: [ 'read' ],
+    uuid: '0x9999',
+    properties: ['read'],
     descriptors: [
         new BlenoDescriptor({
             uuid: '0x2AAE',
-            value = 'latitude'
+            value: 'latitude',
         })
     ],
 
     onReadRequest: function (offset, callback) {
-        data = readFile();
-        console.log('sending latitude: '  + data);
-        callback(this.RESULT_SUCCESS, Buffer.from(data, 'utf8'));
+        console.log('hello');
+        console.log(readFile());
+        readFile().then( function (resolve) {
+            console.log(resolve);
+            callback(this.RESULT_SUCCESS, Buffer.from(resolve, 'utf8'));
+        });
+        //            console.log(this.RESULT_SUCCESS);
+  //          console.log(resolve);
+    //        callback(this.RESULT_SUCCESS, Buffer.from(resolve, 'utf8'));
+      //  });
     }
 });
 
@@ -51,25 +62,36 @@ function readFile () {
     if ( !lastSeenDate ) {
         return Buffer.from('null', 'utf8');
     }
-
+    
     var baseDir = '/home/pi/shock-tracker/device/sessions/';
-    var date = moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss');
-    var ch = 'z';
+    var date = moment(lastSeenDate, 'YYYY-MM-DD');
 
-    while (1) {
-        fs.readFile( baseDir + date.format('YYYY-MM-DD') + ch, (err, data) => {
-            if (!err) {
-                return data
+    new Promise( function(resolve, reject) {
+        fs.readdir(baseDir, function (err, fnames) {
+            if (err) {
+                console.log(err);
             }
+            resolve(fnames);
         });
+    })
+    .then( function (filenames) {
+        console.log('filenames: ' + filenames);
+        return new Promise(function (resolve, reject) {
+            filenames.forEach( function (file) {
+                fs.readFile(baseDir + file, 'utf-8', function (err, data) {
+                    if (err) {
+                        console.log(err);
+                    }
 
-        if (ch != 'a') {
-            ch = String.fromCharCode(ch.charCodeAt(0) - 1);
-        } else {
-            date = moment(date, 'YYYY-MM-DD HH:mm:ss').subtract({ hours:24 });
-            ch = 'z';
-        }
-    }
+                    var json = JSON.parse(data);
+                    console.log(json.start_date);
+                    if ( moment(json.start_date, 'YYYY-MM-DD').isSameOrAfter(date) ) {
+                        resolve(data);
+                    }
+                });
+            });
+        });
+    })
 }
 
 
