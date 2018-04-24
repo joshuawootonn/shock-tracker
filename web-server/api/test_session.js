@@ -12,6 +12,9 @@ const axios = require("axios");
 //   console.log(error);
 // });
 
+
+
+
 // get all
 
 // axios.get('http://localhost:3000/api/sessions')
