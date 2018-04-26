@@ -1,5 +1,6 @@
 @charset "UTF-8";
 /*! bulma.io v0.7.1 | MIT License | github.com/jgthms/bulma */
+@import url("https://fonts.googleapis.com/css?family=Roboto");
 @keyframes spinAround {
   from {
     transform: rotate(0deg); }
@@ -6340,5 +6341,20 @@ label.panel-block {
 .footer {
   background-color: #fafafa;
   padding: 3rem 1.5rem 6rem; }
+
+body {
+  font-family: 'Roboto', sans-serif; }
+
+.wrapper {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; }
+
+.field-width {
+  width: 20vw; }
+
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none; }
 
 /*# sourceMappingURL=styles.css.map */
