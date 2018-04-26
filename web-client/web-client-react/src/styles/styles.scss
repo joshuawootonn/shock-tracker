@@ -3,14 +3,13 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto');
 body{
   font-family: 'Roboto', sans-serif;
+  transition: all 1s ease;
 }
 .wrapper{
   padding: 30px 30px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  
-  
+  align-items: center;  
 }
 .content{
   border-radius: 3px;
@@ -29,7 +28,6 @@ h1{
 .form-block{
   padding-top:30px;
 }
-
 input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
 }

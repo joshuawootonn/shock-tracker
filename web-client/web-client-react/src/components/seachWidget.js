@@ -2,53 +2,68 @@ import React, { Component } from "react";
 
 class SearchWidget extends Component {
   render() {
-    const form = " asdf";
-
     return (
       <div className="container wrapper">
         <div className="content">
-          <div class="spread">
+          <div className="spread">
             <div>
               <h1>Shock Tracker</h1>
             </div>
 
             <div>
-              <button onClick={this.props.toggle} class="button bottom-margin">
+              <button onClick={this.props.toggle} className="button bottom-margin">
                 {this.props.expanded ? "-" : "+"}
               </button>
             </div>
           </div>
           {this.props.expanded
             ? <div className="form-block">
-                <div class="field field-width">
-                  <div class="control">
-                    <input class="input" type="number" placeholder="Latitude" />
-                  </div>
-                </div>
-
-                <div class="field field-width">
-                  <div class="control">
+                <div className="field field-width">
+                  <div className="control">
                     <input
-                      class="input"
+                      className="input"
                       type="number"
-                      placeholder="Longitude"
+                      placeholder="Latitude"
+                      value={this.props.lat}
+                      onChange={this.props.change}
+                      name="lat"
                     />
                   </div>
                 </div>
 
-                <div class="field field-width">
-                  <div class="control">
-                    <input class="input" type="number" placeholder="Radius" />
+                <div className="field field-width">
+                  <div className="control">
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="Longitude"
+                      value={this.props.lng}
+                      onChange={this.props.change}
+                      name="lng"
+                    />
                   </div>
                 </div>
-                <div class="field field-width is-grouped">
-                  <div class="control">
-                    <button onClick={this.props.search} class="button is-link">
+
+                <div className="field field-width">
+                  <div className="control">
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="Radius"
+                      value={this.props.radius}
+                      onChange={this.props.change}
+                      name="radius"
+                    />
+                  </div>
+                </div>
+                <div className="field field-width is-grouped">
+                  <div className="control">
+                    <button onClick={this.props.search} className="button is-link">
                       Submit
                     </button>
                   </div>
-                  <div class="control">
-                    <button onClick={this.props.default} class="button is-text">
+                  <div className="control">
+                    <button onClick={this.props.default} className="button is-text">
                       My Location
                     </button>
                   </div>

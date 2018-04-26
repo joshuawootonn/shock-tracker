@@ -6343,7 +6343,8 @@ label.panel-block {
   padding: 3rem 1.5rem 6rem; }
 
 body {
-  font-family: 'Roboto', sans-serif; }
+  font-family: 'Roboto', sans-serif;
+  transition: all 1s ease; }
 
 .wrapper {
   padding: 30px 30px;
