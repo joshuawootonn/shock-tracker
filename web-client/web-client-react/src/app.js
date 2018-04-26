@@ -11,11 +11,14 @@ class App extends Component {
     this.state = {
       lat: 41.6611,
       lng: -91.5302,
-      radius: 100,
+      radius: 1,
       expanded: true,
       sessions: [],
       status: ""
     };
+  }
+  componentDidMount = () => {
+    this.search();
   }
   search = () => {
     const here = this;
@@ -50,7 +53,12 @@ class App extends Component {
           lng={this.state.lng}
           radius={this.state.radius}
         />
-        <MyMapContainer lng={this.state.lng} lat={this.state.lat} sessions={this.state.sessions}/>
+        <MyMapContainer
+          lng={this.state.lng}
+          lat={this.state.lat}
+          sessions={this.state.sessions}
+          radius={this.state.radius}
+        />
       </div>
     );
   }

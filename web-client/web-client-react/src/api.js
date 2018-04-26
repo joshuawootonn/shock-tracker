@@ -1,5 +1,4 @@
 import axios from 'axios';
-const key = process.env.GOOGLE_MAPS_API;
 const PROXY = "https://cors-anywhere.herokuapp.com/";
 
 export const search = (lat,lng,radius) => {
