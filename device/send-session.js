@@ -34,7 +34,7 @@ var dateTimeCh = new BlenoCharacteristic({
 
 });
 
-var latitudeCh = new BlenoCharacteristic ({
+var transferCh = new BlenoCharacteristic ({
     uuid: '0x9999',
     properties: ['read'],
     descriptors: [
@@ -47,10 +47,13 @@ var latitudeCh = new BlenoCharacteristic ({
     onReadRequest: function (offset, callback) {
         console.log('hello');
         console.log(readFile());
-        readFile().then( function (resolve) {
+        
+        readFile()
+        .then( function (resolve) {
             console.log(resolve);
             callback(this.RESULT_SUCCESS, Buffer.from(resolve, 'utf8'));
         });
+
         //            console.log(this.RESULT_SUCCESS);
   //          console.log(resolve);
     //        callback(this.RESULT_SUCCESS, Buffer.from(resolve, 'utf8'));
@@ -66,7 +69,7 @@ function readFile () {
     var baseDir = '/home/pi/shock-tracker/device/sessions/';
     var date = moment(lastSeenDate, 'YYYY-MM-DD');
 
-    new Promise( function(resolve, reject) {
+    return new Promise( function(resolve, reject) {
         fs.readdir(baseDir, function (err, fnames) {
             if (err) {
                 console.log(err);
@@ -89,9 +92,11 @@ function readFile () {
                         resolve(data);
                     }
                 });
+
+                resolve('notfound');
             });
         });
-    })
+    });
 }
 
 
@@ -112,12 +117,12 @@ bleno.on('advertisingStart', function(error) {
 
         bleno.setServices([
             new BlenoPrimaryService({
-                uuid: '808A',
+                uuid: '13333333-3333-3333-3333-333333333337',
                 characteristics: [ dateTimeCh ]
             }),
             new BlenoPrimaryService({
-                uuid:'FFFF',
-                characteristics: [ latitudeCh ]
+                uuid: '13333333-3333-3333-3333-333333333338',
+                characteristics: [ transferCh ]
             })
         ]);
     }

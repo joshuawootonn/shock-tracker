@@ -3,24 +3,33 @@ var bleno = require('bleno');
 var fs = require('fs');
 
 var BlenoCharacteristic = bleno.Characteristic;
+var BlenoDescriptor = bleno.Descriptor;
 
 var SendCharacteristic = function () {
 	SendCharacteristic.super_.call(this, {
-		uuid: 'fffffffffffffffffffffffffffffff1',
+		uuid: 'f45225be-4713-4531-ab8d-ab4b8662247f',
 		properties: ['read', 'write', 'notify'],
-		value: null
+        descriptors: [
+		    new BlenoDescriptor({
+                uuid: 'f45225be-4713-4531-ab8d-ab4b8662247f',
+            })
+        ],
 	});
+
+    this._value = new Buffer(0);
+    this._updateValueCallback = null;
 };
 
 util.inherits(SendCharacteristic, BlenoCharacteristic);
 
 SendCharacteristic.prototype.onReadRequest = function(offset, callback) {
+    console.log("READ Request");
     // read most recent session file and send it
-    fs.readFile('./sample-sessions/2018-04-09a.json', 'utf8', function(err, data) {
+    fs.readFile('/home/pi/shock-tracker/device/sessions/2018-04-24a.json', 'utf8', function(err, data) {
         if (err) {
             throw err;
         } else {
-            this._value = data;
+            this._value = new Buffer.from("this is a test", 'utf8');
             console.log('SendCharacteristic -- onReadRequest: value = ' + this._value);
             callback(this.RESULT_SUCCESS, this._value);
         }

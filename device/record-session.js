@@ -3,7 +3,7 @@ var moment = require('moment');
 var fs = require('fs');
 var jsonfile = require('jsonfile');
 var serialport = require('serialport');
-
+//var sensejoystick = require('sense-joystick');
 var IMU = new nodeimu.IMU();
 var serial = new serialport('/dev/ttyUSB0', { baudRate: 115200 });
 
@@ -30,6 +30,13 @@ serial.on('open', function() {
         lon_reading = parseFloat(latlon[1]);
     });
 });
+
+//sensejoystick.getJoystick()
+//.then((joystick) => {
+//    joystick.on('press', (direction) => {
+//        console.log('press');
+//    })
+//});
 
 function getReadings() {
     var imudata = IMU.getValueSync();
