@@ -9,16 +9,20 @@ class App extends Component {
     this.state = {
       lat: 41.6611,
       lng: -91.5302,
-      radius: 100
+      radius: 100,
+      expanded: true
     };
   }
   search = () => {};
   default = () => {};
+  toggle = () => {
+    this.setState({expanded: !this.state.expanded})
+  }
 
   render() {
     return (
       <div>
-        <SearchWidget search={this.search} default={this.default} />
+        <SearchWidget expanded={this.state.expanded} search={this.search} default={this.default} toggle={this.toggle} />
 
         <MyMapComponent
           isMarkerShown

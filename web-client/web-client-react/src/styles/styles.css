@@ -6346,13 +6346,27 @@ body {
   font-family: 'Roboto', sans-serif; }
 
 .wrapper {
-  margin-top: 30px;
+  padding: 30px 30px;
   display: flex;
   flex-direction: column;
   align-items: center; }
 
-.field-width {
-  width: 20vw; }
+.content {
+  border-radius: 3px;
+  background-color: whitesmoke;
+  padding: 30px 30px;
+  width: 30vw; }
+
+.spread {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between; }
+
+h1 {
+  margin-bottom: 0 !important; }
+
+.form-block {
+  padding-top: 30px; }
 
 input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none; }
