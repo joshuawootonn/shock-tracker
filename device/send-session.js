@@ -12,7 +12,7 @@ var fs = require('fs');
 var DEVICE_NAME = 'shockIOT';
 var DEVICE_UUID = ['B8:27:EB:27:65:9B'];
 
-var lastSeenDate = '2018-04-24';
+var lastSeenDate = '2018-04-23 01:23:45';
 var filedata = null;
 
 
@@ -48,16 +48,13 @@ var transferCh = new BlenoCharacteristic ({
         console.log('hello');
         console.log(readFile());
         
-        readFile()
-        .then( function (resolve) {
-            console.log(resolve);
+        try {
+            var data = readFile();
             callback(this.RESULT_SUCCESS, Buffer.from(resolve, 'utf8'));
-        });
-
-        //            console.log(this.RESULT_SUCCESS);
-  //          console.log(resolve);
-    //        callback(this.RESULT_SUCCESS, Buffer.from(resolve, 'utf8'));
-      //  });
+        } catch (e) {
+            console.log("## ERROR ##");
+            console.log(e);
+        }
     }
 });
 
@@ -66,35 +63,22 @@ function readFile () {
         return Buffer.from('null', 'utf8');
     }
     
-    var baseDir = '/home/pi/shock-tracker/device/sessions/';
+    var sessionDir = '/home/pi/shock-tracker/device/sessions/';
     var date = moment(lastSeenDate, 'YYYY-MM-DD');
 
-    return new Promise( function(resolve, reject) {
-        fs.readdir(baseDir, function (err, fnames) {
-            if (err) {
-                console.log(err);
+    filenames = fs.readdirSync(sessionDir);
+
+    filenames.forEach((filename) => {
+        fs.readFileSync(sessionDir + filename, 'utf-8', (error, data) => {
+            if (error) {
+                console.log('file error');
+            } else {
+                var json = JSON.parse(data);
+                console.log('json.start_date: ' + json.start_date);
+                if ( moment(json.start_date, 'YYYY-MM-DD HH:mm:ss').isSameOrAfter(date) ) {
+                    return data;
+                }
             }
-            resolve(fnames);
-        });
-    })
-    .then( function (filenames) {
-        console.log('filenames: ' + filenames);
-        return new Promise(function (resolve, reject) {
-            filenames.forEach( function (file) {
-                fs.readFile(baseDir + file, 'utf-8', function (err, data) {
-                    if (err) {
-                        console.log(err);
-                    }
-
-                    var json = JSON.parse(data);
-                    console.log(json.start_date);
-                    if ( moment(json.start_date, 'YYYY-MM-DD').isSameOrAfter(date) ) {
-                        resolve(data);
-                    }
-                });
-
-                resolve('notfound');
-            });
         });
     });
 }
