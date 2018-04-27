@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-	AsyncStorage,
+  AsyncStorage,
   AppRegistry,
   AppState,
   Alert,
@@ -21,7 +21,10 @@ import {
 import { StackNavigator } from 'react-navigation';
 import MapView from 'react-native-maps';
 import BleManager from 'react-native-ble-manager';
-import { stringToBytes } from 'convert-string';
+import { stringToBytes, bytesToString } from 'convert-string';
+import axios from 'axios';
+
+import Buffer from 'buffer';
 
 const {width, height} = Dimensions.get('window')
 const SCREEN_HEIGHT = height
@@ -47,10 +50,6 @@ class HomeScreen extends React.Component {
     title: 'Home',
   }
 
-  _sync() {
-    Alert.alert('Data Synced', 'Press OK To Continue');
-  }
-
   render() {
     return (
         <View style={styles.container}>
@@ -58,12 +57,6 @@ class HomeScreen extends React.Component {
             <Button
               title="Bluetooth"
               onPress={() => this.props.navigation.navigate('Bluetooth')}
-            />
-          </View>
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Sync"
-              onPress={this._sync}
             />
           </View>
           <View style={styles.buttonContainer}>
@@ -92,7 +85,8 @@ class BluetoothScreen extends React.Component {
       scanning:false,
       date: "2000-01-01 00:00:00",
       peripherals: new Map(),
-      appState: ''
+      appState: '',
+      data: {}
     }
 
     this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
@@ -102,18 +96,28 @@ class BluetoothScreen extends React.Component {
     this.handleAppStateChange = this.handleAppStateChange.bind(this);
   }
 
+  dataSync() {
+    //this.syncDate();
+    console.log(this.state.data);
+    axios.post("http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session", this.state.data)
+    .then(() => {
+      Alert.alert('Data Synced', 'Press OK To Continue');
+    })
+    .catch((error) => {
+      console.log(error);
+      Alert.alert('Connection Error', 'Please Check Your Connection And Try Again');
+    });
+  }
+
   syncDate() {
-
-  	//var d = new Date();
-  	//var value = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
-  	var value;
-  	AsyncStorage.setItem("lastSync", value);
-
+    var value = this.state.data.end_time;
+    console.log(value);
+    //AsyncStorage.setItem("lastSync", value);
   }
 
   componentDidMount() {
 
-  	AsyncStorage.getItem("lastSync", (error, value) => {
+    AsyncStorage.getItem("lastSync", (error, value) => {
       if(!error) {
         if(value !== null) {
 
@@ -220,7 +224,7 @@ class BluetoothScreen extends React.Component {
   handleDiscoverPeripheral(peripheral){
     var peripherals = this.state.peripherals;
     if (!peripherals.has(peripheral.id)){
-      console.log('Got ble peripheral', peripheral);
+      //console.log('Got ble peripheral', peripheral);
       peripherals.set(peripheral.id, peripheral);
       this.setState({ peripherals })
     }
@@ -252,19 +256,44 @@ class BluetoothScreen extends React.Component {
               var dataWrite = stringToBytes(this.state.date);
               var readData;
               BleManager.write(peripheral.id, writeService, writeCharacteristic, dataWrite)
-              .then(() => {
-            		console.log('Write: ' + dataWrite);
-                BleManager.read(peripheral.id, readService, readCharacteristic)
-                .then((readData) => {
-                  console.log('Read: ' + readData);
-                })
-                .catch((error) => {
-                  console.log(error);
-                });
-            	})
-            	.catch((error) => {
-            		console.log(error);
-            	});
+              .then(async () => {
+                console.log('Write: ' + dataWrite);
+                var isnotdone = true;
+                var longresult = "";
+                while(isnotdone)
+                {
+                  var readPromise = BleManager.read(peripheral.id, readService, readCharacteristic);
+                  var timerPromise = new Promise((resolve, reject) => {
+                    setTimeout(resolve, 1000, "TIMEOUT");
+                  });
+                  await Promise.race([readPromise, timerPromise])
+                  .then((readData) => {
+                    if(readData != "TIMEOUT")
+                    {
+                      var result = bytesToString(readData);
+                      
+                      if(result == "DONE")
+                      {
+                        isnotdone = false;
+                      }
+                      else
+                      {
+                        console.log('Read: ' + result);
+                        longresult = longresult + result;
+                      }
+                    }
+                  })
+                  .catch((error) => {
+                    console.log(error);
+                  });
+                }
+                console.log(longresult);
+                var convData = JSON.parse(longresult);
+                this.setState(data: convData);
+              })
+              .catch((error) => {
+                console.log(error);
+              });
             });
           }, 900);
         }).catch((error) => {
@@ -309,6 +338,9 @@ class BluetoothScreen extends React.Component {
             }}
           />
         </ScrollView>
+        <TouchableHighlight style={{marginTop: 0,margin: 20, padding:20, backgroundColor:'#ccc'}} underlayColor={'#abcdef'} onPress={() => this.dataSync() }>
+          <Text>Sync</Text>
+        </TouchableHighlight>
       </View>
     );
   }

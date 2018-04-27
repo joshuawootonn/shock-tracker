@@ -1,2 +1,33 @@
 @import '../../node_modules/bulma/sass/utilities/initial-variables.sass';
 @import '../../node_modules/bulma/bulma.sass';
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+body{
+  font-family: 'Roboto', sans-serif;
+  transition: all 1s ease;
+}
+.wrapper{
+  padding: 30px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+}
+.content{
+  border-radius: 3px;
+  background-color:$light;
+  padding: 30px 30px;
+  width: 30vw;
+}
+.spread{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between
+}
+h1{
+  margin-bottom:0 !important;
+}
+.form-block{
+  padding-top:30px;
+}
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
