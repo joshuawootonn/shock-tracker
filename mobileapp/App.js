@@ -22,7 +22,6 @@ import { StackNavigator } from 'react-navigation';
 import MapView from 'react-native-maps';
 import BleManager from 'react-native-ble-manager';
 import { stringToBytes, bytesToString } from 'convert-string';
-import Timeout from 'await-timeout';
 
 import Buffer from 'buffer';
 
@@ -258,12 +257,17 @@ class BluetoothScreen extends React.Component {
               .then(async () => {
                 console.log('Write: ' + dataWrite);
                 var isnotdone = true;
-                var longresult;
+                var longresult = "";
                 while(isnotdone)
                 {
-                  try {
-                    var readPromise = BleManager.read(peripheral.id, readService, readCharacteristic)
-                    .then((readData) => {
+                  var readPromise = BleManager.read(peripheral.id, readService, readCharacteristic);
+                  var timerPromise = new Promise((resolve, reject) => {
+                    setTimeout(resolve, 1000, "TIMEOUT");
+                  });
+                  await Promise.race([readPromise, timerPromise])
+                  .then((readData) => {
+                    if(readData != "TIMEOUT")
+                    {
                       var result = bytesToString(readData);
                       
                       if(result == "DONE")
@@ -275,20 +279,11 @@ class BluetoothScreen extends React.Component {
                         console.log('Read: ' + result);
                         longresult = longresult + result;
                       }
-
-                    })
-                    .catch((error) => {
-                      console.log(error);
-                    });
-
-                    var timerPromise = timeout.set(1000, "==TIMEOUT==");
-                    await Promise.race([readPromise, timerPromise]);
-                  }
-                  catch(e){
-                    console.error(e);
-                  } finally {
-                    timeout.clear();
-                  }
+                    }
+                  })
+                  .catch((error) => {
+                    console.log(error);
+                  });
                 }
                 console.log("==================");
                 console.log(longresult);
