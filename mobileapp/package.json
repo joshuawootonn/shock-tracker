@@ -9,6 +9,7 @@
   "dependencies": {
     "@rimiti/react-native-toastify": "^0.3.0",
     "await-timeout": "^0.2.0",
+    "axios": "^0.18.0",
     "buffer": "^5.1.0",
     "convert-string": "^0.1.0",
     "native-base": "^2.4.2",

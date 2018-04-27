@@ -22,6 +22,7 @@ import { StackNavigator } from 'react-navigation';
 import MapView from 'react-native-maps';
 import BleManager from 'react-native-ble-manager';
 import { stringToBytes, bytesToString } from 'convert-string';
+import axios from 'axios';
 
 import Buffer from 'buffer';
 
@@ -49,10 +50,6 @@ class HomeScreen extends React.Component {
     title: 'Home',
   }
 
-  _sync() {
-    Alert.alert('Data Synced', 'Press OK To Continue');
-  }
-
   render() {
     return (
         <View style={styles.container}>
@@ -60,12 +57,6 @@ class HomeScreen extends React.Component {
             <Button
               title="Bluetooth"
               onPress={() => this.props.navigation.navigate('Bluetooth')}
-            />
-          </View>
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Sync"
-              onPress={this._sync}
             />
           </View>
           <View style={styles.buttonContainer}>
@@ -94,7 +85,8 @@ class BluetoothScreen extends React.Component {
       scanning:false,
       date: "2000-01-01 00:00:00",
       peripherals: new Map(),
-      appState: ''
+      appState: '',
+      data: {}
     }
 
     this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
@@ -104,12 +96,21 @@ class BluetoothScreen extends React.Component {
     this.handleAppStateChange = this.handleAppStateChange.bind(this);
   }
 
-  syncDate() {
+  dataSync() {
+    console.log(this.state.data);
+    axios.post("http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session", this.state.data)
+    .then(() => {
+      Alert.alert('Data Synced', 'Press OK To Continue');
+    })
+    .catch((error) => {
+      console.log(error);
+      Alert.alert('Connection Error', 'Please Check Your Connection And Try Again');
+    });
+  }
 
-    //var d = new Date();
-    //var value = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+  syncDate() {
     var value;
-    AsyncStorage.setItem("lastSync", value);
+    //AsyncStorage.setItem("lastSync", value);
 
   }
 
@@ -285,8 +286,9 @@ class BluetoothScreen extends React.Component {
                     console.log(error);
                   });
                 }
-                console.log("==================");
                 console.log(longresult);
+                var convData = JSON.parse(longresult);
+                this.setState(data: convData);
               })
               .catch((error) => {
                 console.log(error);
@@ -335,6 +337,9 @@ class BluetoothScreen extends React.Component {
             }}
           />
         </ScrollView>
+        <TouchableHighlight style={{marginTop: 0,margin: 20, padding:20, backgroundColor:'#ccc'}} underlayColor={'#abcdef'} onPress={() => this.dataSync() }>
+          <Text>Sync</Text>
+        </TouchableHighlight>
       </View>
     );
   }
