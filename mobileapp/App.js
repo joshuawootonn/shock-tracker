@@ -97,6 +97,7 @@ class BluetoothScreen extends React.Component {
   }
 
   dataSync() {
+    //this.syncDate();
     console.log(this.state.data);
     axios.post("http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session", this.state.data)
     .then(() => {
@@ -109,9 +110,9 @@ class BluetoothScreen extends React.Component {
   }
 
   syncDate() {
-    var value;
+    var value = this.state.data.end_time;
+    console.log(value);
     //AsyncStorage.setItem("lastSync", value);
-
   }
 
   componentDidMount() {
