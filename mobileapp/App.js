@@ -90,7 +90,7 @@ class BluetoothScreen extends React.Component {
 
     this.state = {
       scanning:false,
-      date: '2000-01-01 00:00:00',
+      date: "2000-01-01 00:00:00",
       peripherals: new Map(),
       appState: ''
     }
@@ -113,12 +113,19 @@ class BluetoothScreen extends React.Component {
 
   componentDidMount() {
 
-  	var syncDate = AsyncStorage.getItem("lastSync");
-  	if(syncDate == null)
-  	{
-  		syncDate = "2000-01-01 00:00:00";
-  	}
-  	this.setState({date: syncDate});
+  	AsyncStorage.getItem("lastSync", (error, value) => {
+      if(!error) {
+        if(value !== null) {
+
+          this.setState({date: value});
+        }
+        else
+        {
+          this.setState({date: "2000-01-01 00:00:00"});
+        }
+        //console.log(this.state.date);
+      }
+    });
 
 
     AppState.addEventListener('change', this.handleAppStateChange);
@@ -236,30 +243,28 @@ class BluetoothScreen extends React.Component {
 
 
           setTimeout(() => {
-
-            /* Test read current RSSI value
-            BleManager.retrieveServices(peripheral.id).then((peripheralData) => {
-              console.log('Retrieved peripheral services', peripheralData);
-              BleManager.readRSSI(peripheral.id).then((rssi) => {
-                console.log('Retrieved actual RSSI value', rssi);
-              });
-            });*/
-
-            // Test using bleno's pizza example
-            // https://github.com/sandeepmistry/bleno/tree/master/examples/pizza
             BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
               //console.log(peripheralInfo);
-              var readService = '13333333-3333-3333-3333-333333333337';
-              var writeService = '13333333-3333-3333-3333-333333333338';
+              var readService = '13333333-3333-3333-3333-333333333338';
+              var writeService = '13333333-3333-3333-3333-333333333337';
               var readCharacteristic = '00000000-0000-0000-0000-000000009999';
               var writeCharacteristic = '00000000-0000-0000-0000-000000002a08';
-              var dataWrite = stringToBytes("2000-01-01 00:00:00");
-              BleManager.write(peripheral.id, writeService, writeCharacteristic, dataWrite).then(() => {
-            		console.log(dataWrite);
-            	});
+              var dataWrite = stringToBytes(this.state.date);
+              var readData;
+              BleManager.write(peripheral.id, writeService, writeCharacteristic, dataWrite)
+              .then(() => {
+            		console.log('Write: ' + dataWrite);
+                BleManager.read(peripheral.id, readService, readCharacteristic)
+                .then((readData) => {
+                  console.log('Read: ' + readData);
+                })
+                .catch((error) => {
+                  console.log(error);
+                });
+            	})
             	.catch((error) => {
             		console.log(error);
-            	})
+            	});
             });
           }, 900);
         }).catch((error) => {
