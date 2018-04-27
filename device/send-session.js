@@ -45,12 +45,30 @@ var transferCh = new BlenoCharacteristic ({
     ],
 
     onReadRequest: function (offset, callback) {
-        console.log('hello');
-        console.log(readFile());
-        
+
         try {
-            var data = readFile();
-            callback(this.RESULT_SUCCESS, Buffer.from(resolve, 'utf8'));
+            if ( filedata == null ) {
+                console.log('reading new file');
+                filedata = readFile();
+            } else if ( filedata == '' ) {
+                console.log('end of message: DONE');
+                filedata = null;
+                callback(this.RESULT_SUCCESS, Buffer.from('DONE'));
+                return;
+            } 
+
+
+            var response = Buffer.from(filedata.slice(0, 10));
+            filedata = filedata.slice(10);
+
+            console.log('sending data: ' + response);
+            callback(this.RESULT_SUCCESS, response);
+
+//        try {
+//            var data = readFile();
+//            console.log('sending data:' + data);
+//            //var slice = data.slice(0,22);
+//            callback(this.RESULT_SUCCESS, Buffer.from('abcdefghijklmnopqrst'));
         } catch (e) {
             console.log("## ERROR ##");
             console.log(e);
@@ -59,28 +77,32 @@ var transferCh = new BlenoCharacteristic ({
 });
 
 function readFile () {
+    var result = "";
+
     if ( !lastSeenDate ) {
+        console.log("!lastSeenDate");
         return Buffer.from('null', 'utf8');
     }
     
     var sessionDir = '/home/pi/shock-tracker/device/sessions/';
-    var date = moment(lastSeenDate, 'YYYY-MM-DD');
+    var date = moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss');
 
     filenames = fs.readdirSync(sessionDir);
 
-    filenames.forEach((filename) => {
-        fs.readFileSync(sessionDir + filename, 'utf-8', (error, data) => {
-            if (error) {
-                console.log('file error');
-            } else {
-                var json = JSON.parse(data);
-                console.log('json.start_date: ' + json.start_date);
-                if ( moment(json.start_date, 'YYYY-MM-DD HH:mm:ss').isSameOrAfter(date) ) {
-                    return data;
-                }
-            }
-        });
+    filenames.forEach( function (filename) {
+        var data = fs.readFileSync(sessionDir + filename, 'utf-8');
+        var json = JSON.parse(data);
+        
+        var sessionStart = moment(json.start_time, 'YYYY-MM-DD HH:mm:ss');
+        var lastDate = moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss');
+
+        if ( moment(json.start_time, 'YYYY-MM-DD HH:mm:ss').isSameOrAfter( moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss') ) ) {
+            result = data;
+        }
+        
     });
+
+    return result;
 }
 
 
