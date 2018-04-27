@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-	AsyncStorage,
+  AsyncStorage,
   AppRegistry,
   AppState,
   Alert,
@@ -21,7 +21,9 @@ import {
 import { StackNavigator } from 'react-navigation';
 import MapView from 'react-native-maps';
 import BleManager from 'react-native-ble-manager';
-import { stringToBytes } from 'convert-string';
+import { stringToBytes, bytesToString } from 'convert-string';
+
+import Buffer from 'buffer';
 
 const {width, height} = Dimensions.get('window')
 const SCREEN_HEIGHT = height
@@ -90,7 +92,7 @@ class BluetoothScreen extends React.Component {
 
     this.state = {
       scanning:false,
-      date: '2000-01-01 00:00:00',
+      date: "2000-01-01 00:00:00",
       peripherals: new Map(),
       appState: ''
     }
@@ -104,21 +106,28 @@ class BluetoothScreen extends React.Component {
 
   syncDate() {
 
-  	//var d = new Date();
-  	//var value = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
-  	var value;
-  	AsyncStorage.setItem("lastSync", value);
+    //var d = new Date();
+    //var value = d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+    var value;
+    AsyncStorage.setItem("lastSync", value);
 
   }
 
   componentDidMount() {
 
-  	var syncDate = AsyncStorage.getItem("lastSync");
-  	if(syncDate == null)
-  	{
-  		syncDate = "2000-01-01 00:00:00";
-  	}
-  	this.setState({date: syncDate});
+    AsyncStorage.getItem("lastSync", (error, value) => {
+      if(!error) {
+        if(value !== null) {
+
+          this.setState({date: value});
+        }
+        else
+        {
+          this.setState({date: "2000-01-01 00:00:00"});
+        }
+        //console.log(this.state.date);
+      }
+    });
 
 
     AppState.addEventListener('change', this.handleAppStateChange);
@@ -213,7 +222,7 @@ class BluetoothScreen extends React.Component {
   handleDiscoverPeripheral(peripheral){
     var peripherals = this.state.peripherals;
     if (!peripherals.has(peripheral.id)){
-      console.log('Got ble peripheral', peripheral);
+      //console.log('Got ble peripheral', peripheral);
       peripherals.set(peripheral.id, peripheral);
       this.setState({ peripherals })
     }
@@ -236,30 +245,52 @@ class BluetoothScreen extends React.Component {
 
 
           setTimeout(() => {
-
-            /* Test read current RSSI value
-            BleManager.retrieveServices(peripheral.id).then((peripheralData) => {
-              console.log('Retrieved peripheral services', peripheralData);
-              BleManager.readRSSI(peripheral.id).then((rssi) => {
-                console.log('Retrieved actual RSSI value', rssi);
-              });
-            });*/
-
-            // Test using bleno's pizza example
-            // https://github.com/sandeepmistry/bleno/tree/master/examples/pizza
             BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
               //console.log(peripheralInfo);
-              var readService = '13333333-3333-3333-3333-333333333337';
-              var writeService = '13333333-3333-3333-3333-333333333338';
+              var readService = '13333333-3333-3333-3333-333333333338';
+              var writeService = '13333333-3333-3333-3333-333333333337';
               var readCharacteristic = '00000000-0000-0000-0000-000000009999';
               var writeCharacteristic = '00000000-0000-0000-0000-000000002a08';
-              var dataWrite = stringToBytes("2000-01-01 00:00:00");
-              BleManager.write(peripheral.id, writeService, writeCharacteristic, dataWrite).then(() => {
-            		console.log(dataWrite);
-            	});
-            	.catch((error) => {
-            		console.log(error);
-            	})
+              var dataWrite = stringToBytes(this.state.date);
+              var readData;
+              BleManager.write(peripheral.id, writeService, writeCharacteristic, dataWrite)
+              .then(async () => {
+                console.log('Write: ' + dataWrite);
+                var isnotdone = true;
+                var longresult = "";
+                while(isnotdone)
+                {
+                  var readPromise = BleManager.read(peripheral.id, readService, readCharacteristic);
+                  var timerPromise = new Promise((resolve, reject) => {
+                    setTimeout(resolve, 1000, "TIMEOUT");
+                  });
+                  await Promise.race([readPromise, timerPromise])
+                  .then((readData) => {
+                    if(readData != "TIMEOUT")
+                    {
+                      var result = bytesToString(readData);
+                      
+                      if(result == "DONE")
+                      {
+                        isnotdone = false;
+                      }
+                      else
+                      {
+                        console.log('Read: ' + result);
+                        longresult = longresult + result;
+                      }
+                    }
+                  })
+                  .catch((error) => {
+                    console.log(error);
+                  });
+                }
+                console.log("==================");
+                console.log(longresult);
+              })
+              .catch((error) => {
+                console.log(error);
+              });
             });
           }, 900);
         }).catch((error) => {

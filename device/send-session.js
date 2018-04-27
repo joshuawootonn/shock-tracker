@@ -12,7 +12,7 @@ var fs = require('fs');
 var DEVICE_NAME = 'shockIOT';
 var DEVICE_UUID = ['B8:27:EB:27:65:9B'];
 
-var lastSeenDate = '2018-04-24';
+var lastSeenDate = '2018-04-23 01:23:45';
 var filedata = null;
 
 
@@ -34,7 +34,7 @@ var dateTimeCh = new BlenoCharacteristic({
 
 });
 
-var latitudeCh = new BlenoCharacteristic ({
+var transferCh = new BlenoCharacteristic ({
     uuid: '0x9999',
     properties: ['read'],
     descriptors: [
@@ -45,53 +45,64 @@ var latitudeCh = new BlenoCharacteristic ({
     ],
 
     onReadRequest: function (offset, callback) {
-        console.log('hello');
-        console.log(readFile());
-        readFile().then( function (resolve) {
-            console.log(resolve);
-            callback(this.RESULT_SUCCESS, Buffer.from(resolve, 'utf8'));
-        });
-        //            console.log(this.RESULT_SUCCESS);
-  //          console.log(resolve);
-    //        callback(this.RESULT_SUCCESS, Buffer.from(resolve, 'utf8'));
-      //  });
+
+        try {
+            if ( filedata == null ) {
+                console.log('reading new file');
+                filedata = readFile();
+            } else if ( filedata == '' ) {
+                console.log('end of message: DONE');
+                filedata = null;
+                callback(this.RESULT_SUCCESS, Buffer.from('DONE'));
+                return;
+            } 
+
+
+            var response = Buffer.from(filedata.slice(0, 10));
+            filedata = filedata.slice(10);
+
+            console.log('sending data: ' + response);
+            callback(this.RESULT_SUCCESS, response);
+
+//        try {
+//            var data = readFile();
+//            console.log('sending data:' + data);
+//            //var slice = data.slice(0,22);
+//            callback(this.RESULT_SUCCESS, Buffer.from('abcdefghijklmnopqrst'));
+        } catch (e) {
+            console.log("## ERROR ##");
+            console.log(e);
+        }
     }
 });
 
 function readFile () {
+    var result = "";
+
     if ( !lastSeenDate ) {
+        console.log("!lastSeenDate");
         return Buffer.from('null', 'utf8');
     }
     
-    var baseDir = '/home/pi/shock-tracker/device/sessions/';
-    var date = moment(lastSeenDate, 'YYYY-MM-DD');
+    var sessionDir = '/home/pi/shock-tracker/device/sessions/';
+    var date = moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss');
 
-    new Promise( function(resolve, reject) {
-        fs.readdir(baseDir, function (err, fnames) {
-            if (err) {
-                console.log(err);
-            }
-            resolve(fnames);
-        });
-    })
-    .then( function (filenames) {
-        console.log('filenames: ' + filenames);
-        return new Promise(function (resolve, reject) {
-            filenames.forEach( function (file) {
-                fs.readFile(baseDir + file, 'utf-8', function (err, data) {
-                    if (err) {
-                        console.log(err);
-                    }
+    filenames = fs.readdirSync(sessionDir);
 
-                    var json = JSON.parse(data);
-                    console.log(json.start_date);
-                    if ( moment(json.start_date, 'YYYY-MM-DD').isSameOrAfter(date) ) {
-                        resolve(data);
-                    }
-                });
-            });
-        });
-    })
+    filenames.forEach( function (filename) {
+        var data = fs.readFileSync(sessionDir + filename, 'utf-8');
+        var json = JSON.parse(data);
+        
+        var sessionStart = moment(json.start_time, 'YYYY-MM-DD HH:mm:ss');
+        var lastDate = moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss');
+
+        if ( moment(json.start_time, 'YYYY-MM-DD HH:mm:ss').isSameOrAfter( moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss') ) ) {
+            result = data;
+        }
+        
+    });
+
+    return result;
 }
 
 
@@ -112,12 +123,12 @@ bleno.on('advertisingStart', function(error) {
 
         bleno.setServices([
             new BlenoPrimaryService({
-                uuid: '808A',
+                uuid: '13333333-3333-3333-3333-333333333337',
                 characteristics: [ dateTimeCh ]
             }),
             new BlenoPrimaryService({
-                uuid:'FFFF',
-                characteristics: [ latitudeCh ]
+                uuid: '13333333-3333-3333-3333-333333333338',
+                characteristics: [ transferCh ]
             })
         ]);
     }

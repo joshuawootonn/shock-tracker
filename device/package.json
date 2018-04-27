@@ -13,6 +13,7 @@
     "jsonfile": "^4.0.0",
     "moment": "^2.22.0",
     "nodeimu": "^2.1.9",
+    "sense-joystick": "0.0.3",
     "serialport": "^6.2.0"
   }
 }
