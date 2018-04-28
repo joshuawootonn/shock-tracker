@@ -16,6 +16,9 @@ var lastSeenDate = '2018-04-23 01:23:45';
 var filedata = null;
 var dataTotalSize = 0;
 
+var readfailed = false;
+var lastbytes = '';
+
 
 var dateTimeCh = new BlenoCharacteristic({
     uuid: '0x2A08',
@@ -35,6 +38,21 @@ var dateTimeCh = new BlenoCharacteristic({
 
 });
 
+var errorCh = new BlenoCharacteristic({
+    uuid: '0x9911',
+    properties: ['write'],
+    descriptors: [
+        new BlenoDescriptor({
+            uuid: '0x9911'
+        })
+    ],
+
+    onWriteRequest: function (data, offset, withoutResponse, callback) {
+        console.log('read failed!');
+        readfailed = true;
+    }
+});
+
 var transferCh = new BlenoCharacteristic ({
     uuid: '0x9999',
     properties: ['read'],
@@ -48,27 +66,49 @@ var transferCh = new BlenoCharacteristic ({
     onReadRequest: function (offset, callback) {
 
         try {
-            if ( filedata == null ) {
+            if ( filedata == null && !readfailed ) {
                 console.log('reading new file');
-                //filedata = readFile();
-                filedata = 'aaaaaaaaaaaaaabbbbbbbbbbbbbbbbbccccccccccccccccdddddddddddddddddddeeeeeeeeeeeeeeeeefffffffffffffffffffggggggggggggggg';
-                dataTotalSize = filedata.length;
+                filedata = readFile();
             } else if ( filedata == '' ) {
-                console.log('####################');
-                console.log('end of message: DONE');
-                filedata = null;
-                callback(this.RESULT_SUCCESS, Buffer.from('DONE'));
-                return;
-            } 
+                if ( readfailed ) {
+                    console.log('read failed!');
+                    readfailed = true;
+                    callback(this.RESULT_SUCCESS, Buffer.from(lastbytes));
+                    return;
+                } else {
+                    console.log('\n####################');
+                    console.log('end of message: DONE');
+                    filedata = null;
+                    lastbytes = 'DONE';
+                    callback(this.RESULT_SUCCESS, Buffer.from('DONE'));
+                    return;
+                }
+            }
 
 
-            var response = Buffer.from(filedata.slice(0, 20));
-            filedata = filedata.slice(20);
+            if ( readfailed ) {
 
-            dataTotalSize = dataTotalSize - 20;
+                // last read request failed; send previous bytes
 
-            console.log('sending data: ' + response + '        ' + dataTotalSize + ' characters left');
-            callback(this.RESULT_SUCCESS, response);
+                console.log('read failed!')
+                readfailed = true;
+                callback(this.RESULT_SUCCESS, Buffer.from(lastbytes));
+
+            } else {
+
+                /* Last read request did not fail; send bytes as usual */
+
+                // get next 20 bytes and update file data
+                var response = filedata.slice(0, 20);
+                filedata = filedata.slice(20);
+
+                // update last sent bytes
+                lastbytes = response;
+
+                console.log('sending data: ' + response);
+                callback(this.RESULT_SUCCESS, Buffer.from(response));
+
+            }
 
 //        try {
 //            var data = readFile();
@@ -89,7 +129,7 @@ function readFile () {
         console.log("!lastSeenDate");
         return Buffer.from('null', 'utf8');
     }
-    
+
     var sessionDir = '/home/pi/shock-tracker/device/sessions/';
     var date = moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss');
 
@@ -98,14 +138,14 @@ function readFile () {
     filenames.forEach( function (filename) {
         var data = fs.readFileSync(sessionDir + filename, 'utf-8');
         var json = JSON.parse(data);
-        
+
         var sessionStart = moment(json.start_time, 'YYYY-MM-DD HH:mm:ss');
         var lastDate = moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss');
 
         if ( moment(json.start_time, 'YYYY-MM-DD HH:mm:ss').isSameOrAfter( moment(lastSeenDate, 'YYYY-MM-DD HH:mm:ss') ) ) {
             result = data;
         }
-        
+
     });
 
     return result;
@@ -124,7 +164,7 @@ bleno.on('stateChange', function(state) {
 
 bleno.on('advertisingStart', function(error) {
     console.log("advertising start");
-    
+
     if (!error) {
 
         bleno.setServices([
@@ -135,6 +175,10 @@ bleno.on('advertisingStart', function(error) {
             new BlenoPrimaryService({
                 uuid: '13333333-3333-3333-3333-333333333338',
                 characteristics: [ transferCh ]
+            }),
+            new BlenoPrimaryService({
+                uuid: '00000000-0000-0000-0000-000000000911',
+                characteristics: [ errorCh ]
             })
         ]);
     }
