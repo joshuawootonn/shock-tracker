@@ -91,7 +91,7 @@ var transferCh = new BlenoCharacteristic ({
                 // last read request failed; send previous bytes
 
                 console.log('read failed!')
-                readfailed = true;
+                readfailed = false;
                 callback(this.RESULT_SUCCESS, Buffer.from(lastbytes));
 
             } else {
