@@ -19,6 +19,8 @@ var session = {
     data: []
 }
 
+var readData = {};
+
 serial.on('open', function() {
     console.log('Serial connection opened');
     serial.on('data', function(data) {
@@ -47,18 +49,18 @@ function getReadings() {
         session.data.push({
             timestamp: ts.format(DATE_FORMAT),
             gyro: {
-                pitch: imudata.gyro.x,
-                roll: imudata.gyro.y,
-                yaw: imudata.gyro.z,
+                pitch: imudata.gyro.x.toFixed(3),
+                roll: imudata.gyro.y.toFixed(3),
+                yaw: imudata.gyro.z.toFixed(3),
             },
             gps: {
-                latitude: lat_reading,
-                longitude: lon_reading,
+                latitude: lat_reading.toFixed(5),
+                longitude: lon_reading.toFixed(5),
             },
             accel: {
-                x: imudata.accel.x,
-                y: imudata.accel.y,
-                z: imudata.accel.z
+                x: imudata.accel.x.toFixed(3),
+                y: imudata.accel.y.toFixed(3),
+                z: imudata.accel.z.toFixed(3)
             }
         });
     }
@@ -94,7 +96,7 @@ function shouldPersist(imudata, ts) {
             // if greatest relative difference is > 10% then save
             maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff); 
         });
-        if (maxdiff > 1.8) {
+        if (maxdiff > 2.0) {
             return true;
         }
     } else {
@@ -144,7 +146,7 @@ function getNextFileName() {
 }
 
 // call getReadings every second
-setInterval(getReadings, 1000);
+setInterval(getReadings, 3000);
 
 // call exitHandler on program exit
 //process.on('exit', exitHandler.bind(null, {cleanup:true}));

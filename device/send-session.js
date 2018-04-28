@@ -14,6 +14,7 @@ var DEVICE_UUID = ['B8:27:EB:27:65:9B'];
 
 var lastSeenDate = '2018-04-23 01:23:45';
 var filedata = null;
+var dataTotalSize = 0;
 
 
 var dateTimeCh = new BlenoCharacteristic({
@@ -49,8 +50,11 @@ var transferCh = new BlenoCharacteristic ({
         try {
             if ( filedata == null ) {
                 console.log('reading new file');
-                filedata = readFile();
+                //filedata = readFile();
+                filedata = 'aaaaaaaaaaaaaabbbbbbbbbbbbbbbbbccccccccccccccccdddddddddddddddddddeeeeeeeeeeeeeeeeefffffffffffffffffffggggggggggggggg';
+                dataTotalSize = filedata.length;
             } else if ( filedata == '' ) {
+                console.log('####################');
                 console.log('end of message: DONE');
                 filedata = null;
                 callback(this.RESULT_SUCCESS, Buffer.from('DONE'));
@@ -58,10 +62,12 @@ var transferCh = new BlenoCharacteristic ({
             } 
 
 
-            var response = Buffer.from(filedata.slice(0, 10));
-            filedata = filedata.slice(10);
+            var response = Buffer.from(filedata.slice(0, 20));
+            filedata = filedata.slice(20);
 
-            console.log('sending data: ' + response);
+            dataTotalSize = dataTotalSize - 20;
+
+            console.log('sending data: ' + response + '        ' + dataTotalSize + ' characters left');
             callback(this.RESULT_SUCCESS, response);
 
 //        try {
