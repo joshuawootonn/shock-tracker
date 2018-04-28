@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import MyMapComponent from "./myMapComponent";
 import { Marker } from "react-google-maps";
+import alertIcon from "../images/alert.png";
 
 class MyMapContainer extends Component {
   render() {
@@ -15,6 +16,9 @@ class MyMapContainer extends Component {
           return (
             <Marker
               key={ele.id}
+              icon={
+                icon
+              }
               position={{ lat: ele.latitude, lng: ele.longitude }}
             />
           );
@@ -32,7 +36,7 @@ class MyMapContainer extends Component {
     if (radius < 25) zoom = 11;
     if (radius < 10) zoom = 12;
     if (radius < 5) zoom = 13;
-    if (radius <1) zoom = 13;
+    if (radius < 1) zoom = 13;
 
     return <MyMapComponent lng={lng} lat={lat} markers={markers} zoom={zoom} />;
   }
