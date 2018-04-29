@@ -21,13 +21,20 @@ class MyMapContainer extends Component {
       sessions.forEach(element => {       
         const arr = element.data;
         const temp = arr.map((ele, i) => {
-          const index = Math.round(ele.speed_score*10) -1;
-          console.log(index);
+          const speedIndex = Math.round(ele.speed_score*10)-1;
+          const accelerationIndex = Math.round(ele.accel_score*10)-1;
+          let icon;
+          if(this.props.checked === "speed" && ele.speed_score)
+            icon =  icons[speedIndex];
+          else if (this.props.checked === "acceleration" && ele.accel_score)
+            icon =  icons[accelerationIndex];
+          else
+            icon =  icon1;
           return (
             <Marker
               key={ele.id}
               icon={
-                ele.speed_score ? icons[index] : icon1
+               icon
               }
               position={{ lat: ele.latitude, lng: ele.longitude }}
             />

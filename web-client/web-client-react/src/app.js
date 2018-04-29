@@ -14,7 +14,8 @@ class App extends Component {
       radius: 1,
       expanded: true,
       sessions: [],
-      status: ""
+      status: "",
+      checked: "acceleration"
     };
   }
   componentDidMount = () => {
@@ -31,6 +32,9 @@ class App extends Component {
         here.setState({ status: "Error" });
       });
   };
+  changeState = (event) => {
+    this.setState({checked: event.target.value})
+  }
   default = () => {};
   toggle = () => {
     this.setState({ expanded: !this.state.expanded });
@@ -51,12 +55,15 @@ class App extends Component {
           lat={this.state.lat}
           lng={this.state.lng}
           radius={this.state.radius}
+          changeState={this.changeState}
+          checked={this.state.checked}
         />
         <MyMapContainer
           lng={this.state.lng}
           lat={this.state.lat}
           sessions={this.state.sessions}
           radius={this.state.radius}
+          checked={this.state.checked}
         />
       </div>
     );
