@@ -45,6 +45,8 @@ function getReadings() {
     var imudata = IMU.getValueSync();
     var ts = moment();
 
+    var dat = getData(imudata);
+
     if (shouldPersist(imudata, ts)) {
         console.log("Recording data @ " + ts.format("HH:mm:ss"));
         session.data.push({
@@ -75,21 +77,21 @@ function getData(imudata) {
     return {
         x: imudata.accel.x.toFixed(3),
         y: imudata.accel.y.toFixed(3),
-        z: imudata.accel.z.toFixed(3)
-        pitch: imudata.gyro.pitch.toFixed(3),
-        roll: imudata.gyro.roll.toFixed(3),
-        yaw: imudata.gyro.yaw.toFixed(3)
+        z: imudata.accel.z.toFixed(3),
+        pitch: imudata.gyro.x.toFixed(3),
+        roll: imudata.gyro.y.toFixed(3),
+        yaw: imudata.gyro.z.toFixed(3)
     }
 }
 
 function generateScore() {
     max = {
-        accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z);
-        gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw);
+        accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z),
+        gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw)
     };
     min = {
-        accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z);
-        gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw);
+        accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z),
+        gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw),
     };
 
     session.data.forEach( (el) => {
@@ -115,9 +117,9 @@ function scaleBetween(unscaledNum, minAllowed, maxAllowed, min, max) {
 
 function shouldPersist(imudata, ts) {
 
-    if (!hasLocation) {
-        return false;
-    }
+//    if (!hasLocation) {
+//        return false;
+//    }
 
     // if 5 or more seconds have passed since last recorded reading
     // save it
