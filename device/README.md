@@ -42,18 +42,17 @@ Here is the outline of a session file:
     {
         'timestamp': 'YYYY-MM-DD HH:mm:ss',
         'gyro': {
-            'score': // a number n, where 1.0 <= n <= 10.0. 1.0 means low danger for that point, 10.0 means high danger
+            'score': // a number n, where 0 <= n <= 1.0; 0 means this data point is the minimum, 1.0 means max
             'pitch': 3.102,
             'roll': 0.339,
             'yaw': 0.974
         },
         'gps': {
-            'score': // a number n, where 1.0 <= n <= 10.0. 1.0 means low danger for that point, 10.0 means high danger
             'latitude': 41.48392,
             'longitude': -91.29492
         },
         'accel': {
-            'score': // a number n, where 1.0 <= n <= 10.0. 1.0 means low danger for that point, 10.0 means high danger
+            'score': // a number n, where 0 <= n <= 1.0; 0 means this data point is the minimum, 1.0 means max
             'x': 2.445,
             'y': 0.443,
             'z': 0.332
@@ -62,18 +61,17 @@ Here is the outline of a session file:
     {
         'timestamp': 'YYYY-MM-DD HH:mm:ss',
         'gyro': {
-            'score': // a number n, where 1.0 <= n <= 10.0. 1.0 means low danger for that point, 10.0 means high danger
+            'score': // a number n, where 0 <= n <= 1.0; 0 means this data point is the minimum, 1.0 means max
             'pitch': 3.102,
             'roll': 0.339,
             'yaw': 0.974
         },
         'gps': {
-            'score': // a number n, where 1.0 <= n <= 10.0. 1.0 means low danger for that point, 10.0 means high danger
             'latitude': 41.48392,
             'longitude': -91.29492
         },
         'accel': {
-            'score': // a number n, where 1.0 <= n <= 10.0. 1.0 means low danger for that point, 10.0 means high danger
+            'score': // a number n, where 0 <= n <= 1.0; 0 means this data point is the minimum, 1.0 means max
             'x': 2.445,
             'y': 0.443,
             'z': 0.332
