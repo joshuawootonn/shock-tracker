@@ -25,7 +25,6 @@ class App extends Component {
     api
       .search(this.state.lat, this.state.lng, this.state.radius)
       .then(function(response) {
-        console.log(response.data);
         here.setState({ sessions: response.data, status: "" });
       })
       .catch(function(error) {
