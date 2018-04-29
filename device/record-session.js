@@ -26,7 +26,6 @@ serial.on('open', function() {
     console.log('Serial connection opened');
     serial.on('data', function(data) {
         hasLocation = true;
-        console.log('data.toString(): ' + data.toString());
         latlon = data.toString().split(',');
         console.log(latlon[0] + ',' + latlon[1]);
         lat_reading = parseFloat(latlon[0]);
@@ -93,26 +92,22 @@ function generateScore() {
         accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z),
         gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw),
     };
-
+ 
     session.data.forEach( (el) => {
         var acc = reduce(el.accel.x, el.accel.y, el.accel.z);
-        var gyr = reduce(el.gyro.pitch, el.gyro.gyro, el.gyro.yaw);
+        var gyr = reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw);
 
         if (acc < min.accel) { min.accel = acc; }
         if (gyr < min.gyro) { min.gyro = gyr; }
         if (acc > max.accel) { max.accel = acc; }
         if (gyr > max.gyro) { max.gyro = gyr; }
+
     });
 
-    console.log('max: ' + max.gyro + ' ' + max.accel);
-    console.log('min: ' + min.gyro + ' ' + min.accel);
-
     session.data.forEach( (el) => {
-        console.log(min.gyro, max.gyro, max.gyro-min.gyro);
-        console.log( scaleBetween ( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro));
-        el.gyro.score = scaleBetween( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro ).toFixed(2);
-        el.accel.score = scaleBetween( reduce(el.accel.x, el.accel.y, el.accel.z), 0.0, 1.0, min.accel, max.accel ).toFixed(2);
-    })
+        el.gyro.score = parseFloat( scaleBetween( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro ).toFixed(2) );
+        el.accel.score = parseFloat( scaleBetween( reduce(el.accel.x, el.accel.y, el.accel.z), 0.0, 1.0, min.accel, max.accel ).toFixed(2) );
+    });
 
 }
 
@@ -150,7 +145,7 @@ function shouldPersist(imudata, ts) {
             // if greatest relative difference is > 10% then save
             maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff);
         });
-        if (maxdiff > 2.0) {
+        if (maxdiff > 1.8) {
             return true;
         }
     } else {
@@ -203,7 +198,7 @@ function getNextFileName() {
 }
 
 // call getReadings every second
-setInterval(getReadings, 3000);
+setInterval(getReadings, 2000);
 
 // call exitHandler on program exit
 //process.on('exit', exitHandler.bind(null, {cleanup:true}));
