@@ -19,7 +19,8 @@ var session = {
     data: []
 }
 
-var readData = {};
+var min = {};
+var max = {};
 
 serial.on('open', function() {
     console.log('Serial connection opened');
@@ -45,25 +46,69 @@ function getReadings() {
     var ts = moment();
 
     if (shouldPersist(imudata, ts)) {
+
+        var dat = getData(imudata);
+
+        if (session.data == {}) {
+            min.accel = reduce(dat.x, dat.y, dat.z);
+            min.gyro = reduce(dat.pitch, dat.roll, dat.yaw);
+
+            max.accel = reduce(dat.x, dat.y, dat.z);
+            max.gyro = reduce(dat.pitch, dat.roll, dat.yaw);
+        else {
+            min.accel = Math.min( min.accel, reduce(dat.x, dat.y, dat.z) );
+            min.gyro = Math.min( min.gyro, reduce(dat.pitch, dat.roll, dat.yaw) );
+
+            max.accel = Math.max( max.accel, reduce(dat.x, dat.y, dat.z) );
+            max.gyro = Math.max( max.accel, reduce(dat.pitch, dat.roll, dat.yaw) );
+        }
+
         console.log("Recording data @ " + ts.format("HH:mm:ss"));
         session.data.push({
             timestamp: ts.format(DATE_FORMAT),
             gyro: {
-                pitch: imudata.gyro.x.toFixed(3),
-                roll: imudata.gyro.y.toFixed(3),
-                yaw: imudata.gyro.z.toFixed(3),
+                score: getGryoScore(dat)
+                pitch: dat.pitch,
+                roll: dat.roll,
+                yaw: dat.yaw,
             },
             gps: {
                 latitude: lat_reading.toFixed(5),
                 longitude: lon_reading.toFixed(5),
             },
             accel: {
-                x: imudata.accel.x.toFixed(3),
-                y: imudata.accel.y.toFixed(3),
-                z: imudata.accel.z.toFixed(3)
+                score: getAccelScore(dat)
+                x: dat.x,
+                y: dat.y,
+                z: dat.z,
             }
         });
     }
+}
+
+function reduce(a, b, c) {
+    return Math.sqrt( Math.pow(a, 2) + Math.pow(b, 2) + Math.pow(c, 2) );
+}
+
+function getData(imudata) {
+    return {
+        x: imudata.accel.x.toFixed(3),
+        y: imudata.accel.y.toFixed(3),
+        z: imudata.accel.z.toFixed(3)
+        pitch: imudata.gyro.x.toFixed(3),
+        roll: imudata.gyro.y.toFixed(3),
+        yaw: imudata.gyro.z.toFixed(3)
+    }
+}
+
+function calculateDanger(readings, dat) {
+    var min = readings[0];
+
+   
+    
+    var danger = 0;
+
+    return danger;
 }
 
 function shouldPersist(imudata, ts) {
