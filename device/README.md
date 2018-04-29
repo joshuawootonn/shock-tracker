@@ -31,3 +31,53 @@ Records the following data points at intervals of 0.25s:
   - Gyroscope (roll, pitch, yaw)
 
 Stores these data points in JSON file for the current session. Sends all data since last transfer over bluetooth upon connection.
+
+### Session Recording 
+Here is the outline of a session file:
+```
+{
+    'start_time': 'YYYY-MM-DD HH:mm:ss',
+    'end_time': 'YYYY-MM-DD HH:mm:ss',
+    'data': [
+    {
+        'timestamp': 'YYYY-MM-DD HH:mm:ss',
+        'score': // a number n, where 1.0 <= n <= 10.0. 1.0 means low danger for that point, 10.0 means high danger
+        'gyro': {
+            'pitch': 3.102,
+            'roll': 0.339,
+            'yaw': 0.974
+        },
+        'gps': {
+            'latitude': 41.48392,
+            'longitude': -91.29492
+        },
+        'accel': {
+            'x': 2.445,
+            'y': 0.443,
+            'z': 0.332
+        }
+    },
+    {
+        'timestamp': 'YYYY-MM-DD HH:mm:ss',
+        'score': // a number n, where 1.0 <= n <= 10.0. 1.0 means low danger for that point, 10.0 means high danger
+        'gyro': {
+            'pitch': 3.102,
+            'roll': 0.339,
+            'yaw': 0.974
+        },
+        'gps': {
+            'latitude': 41.48392,
+            'longitude': -91.29492
+        },
+        'accel': {
+            'x': 2.445,
+            'y': 0.443,
+            'z': 0.332
+        }
+    },
+    
+    ...
+      
+  ]
+}
+```
