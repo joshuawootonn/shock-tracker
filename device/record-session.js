@@ -46,23 +46,6 @@ function getReadings() {
     var ts = moment();
 
     if (shouldPersist(imudata, ts)) {
-
-        var dat = getData(imudata);
-
-        if (session.data == {}) {
-            min.accel = reduce(dat.x, dat.y, dat.z);
-            min.gyro = reduce(dat.pitch, dat.roll, dat.yaw);
-
-            max.accel = reduce(dat.x, dat.y, dat.z);
-            max.gyro = reduce(dat.pitch, dat.roll, dat.yaw);
-        else {
-            min.accel = Math.min( min.accel, reduce(dat.x, dat.y, dat.z) );
-            min.gyro = Math.min( min.gyro, reduce(dat.pitch, dat.roll, dat.yaw) );
-
-            max.accel = Math.max( max.accel, reduce(dat.x, dat.y, dat.z) );
-            max.gyro = Math.max( max.accel, reduce(dat.pitch, dat.roll, dat.yaw) );
-        }
-
         console.log("Recording data @ " + ts.format("HH:mm:ss"));
         session.data.push({
             timestamp: ts.format(DATE_FORMAT),
@@ -101,25 +84,46 @@ function getData(imudata) {
     }
 }
 
-function calculateDanger(readings, dat) {
-    var min = readings[0];
+function generateScore() {
+    max = {
+        accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z);
+        gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw);
+    };
+    min = {
+        accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z);
+        gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw);
+    };
 
-   
-    
-    var danger = 0;
+    session.data.forEach( (el) => {
+        var acc = reduce(el.accel.x, el.accel.y, el.accel.z);
+        var gyr = reduce(el.gyro.x, el.gyro.y, el.gyro.z);
 
-    return danger;
+        if (acc < min.accel) { min.accel = acc; }
+        if (gyr < min.gyro) { min.gyro = gyr; }
+        if (acc > max.accel) { max.accel = acc; }
+        if (gyr > max.gyro) { max.gyro = gyr; }
+    });
+
+    session.data.forEach( (el) => {
+        el.gyro.score = scaleBetween( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro);
+        el.accel.score = scaleBetween( reduce(el.accel.x, el.accel.y, el.accel.z), 0.0, 1.0, min.accel, max.accel);
+    })
+
+}
+
+function scaleBetween(unscaledNum, minAllowed, maxAllowed, min, max) {
+    return (maxAllowed - minAllowed) * (unscaledNum - min) / (max - min) + minAllowed;
 }
 
 function shouldPersist(imudata, ts) {
-    
+
     if (!hasLocation) {
         return false;
     }
 
     // if 5 or more seconds have passed since last recorded reading
     // save it
-    if (session.data.length > 0) { 
+    if (session.data.length > 0) {
         if (ts.diff(session.data[session.data.length - 1].timestamp, 'seconds') >= 5) {
             return true;
         }
@@ -136,10 +140,10 @@ function shouldPersist(imudata, ts) {
 
             xdiff = Math.abs(d.accel.x - imudata.accel.x) / d.accel.x;
             ydiff = Math.abs(d.accel.y - imudata.accel.y) / d.accel.y;
-            zdiff = Math.abs(d.accel.z - imudata.accel.z) / d.accel.z; 
+            zdiff = Math.abs(d.accel.z - imudata.accel.z) / d.accel.z;
 
             // if greatest relative difference is > 10% then save
-            maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff); 
+            maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff);
         });
         if (maxdiff > 2.0) {
             return true;
@@ -147,12 +151,15 @@ function shouldPersist(imudata, ts) {
     } else {
         return true;
     }
-        
+
 
     return false;
 }
 
 function exitHandler() {
+
+    generateScore();
+
     clearInterval();
     session['data'].pop(); // remove last element as it may be incomplete
     session['end_time'] = session['data'].slice(-1)[0].timestamp; // set end time
@@ -170,7 +177,7 @@ function getNextFileName() {
     var ch = 'a';
     var path = '/home/pi/shock-tracker/device/sessions/';
     var date = moment().format('YYYY-MM-DD');
-   
+
     function nextFileName() {
         return path + date + ch + '.json';
     }
@@ -199,4 +206,3 @@ process.on('SIGINT', exitHandler.bind(null, {exit:true}));
 //process.on('SIGUSR1', exitHandler.bind(null, {exit:true}));
 //process.on('SIGUSR2', exitHandler.bind(null, {exit:true}));
 //process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
-
