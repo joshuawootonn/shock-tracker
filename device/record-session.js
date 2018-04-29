@@ -50,7 +50,6 @@ function getReadings() {
         session.data.push({
             timestamp: ts.format(DATE_FORMAT),
             gyro: {
-                score: getGryoScore(dat)
                 pitch: dat.pitch,
                 roll: dat.roll,
                 yaw: dat.yaw,
@@ -60,7 +59,6 @@ function getReadings() {
                 longitude: lon_reading.toFixed(5),
             },
             accel: {
-                score: getAccelScore(dat)
                 x: dat.x,
                 y: dat.y,
                 z: dat.z,
