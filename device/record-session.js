@@ -19,7 +19,8 @@ var session = {
     data: []
 }
 
-var readData = {};
+var min = {};
+var max = {};
 
 serial.on('open', function() {
     console.log('Serial connection opened');
@@ -44,37 +45,90 @@ function getReadings() {
     var imudata = IMU.getValueSync();
     var ts = moment();
 
+    var dat = getData(imudata);
+
     if (shouldPersist(imudata, ts)) {
         console.log("Recording data @ " + ts.format("HH:mm:ss"));
         session.data.push({
             timestamp: ts.format(DATE_FORMAT),
             gyro: {
-                pitch: imudata.gyro.x.toFixed(3),
-                roll: imudata.gyro.y.toFixed(3),
-                yaw: imudata.gyro.z.toFixed(3),
+                pitch: parseFloat(dat.pitch),
+                roll: parseFloat(dat.roll),
+                yaw: parseFloat(dat.yaw),
             },
             gps: {
-                latitude: lat_reading.toFixed(5),
-                longitude: lon_reading.toFixed(5),
+                latitude: parseFloat(lat_reading.toFixed(5)),
+                longitude: parseFloat(lon_reading.toFixed(5)),
             },
             accel: {
-                x: imudata.accel.x.toFixed(3),
-                y: imudata.accel.y.toFixed(3),
-                z: imudata.accel.z.toFixed(3)
+                x: parseFloat(dat.x),
+                y: parseFloat(dat.y),
+                z: parseFloat(dat.z),
             }
         });
     }
 }
 
-function shouldPersist(imudata, ts) {
-    
-    if (!hasLocation) {
-        return false;
+function reduce(a, b, c) {
+    return Math.sqrt( Math.pow(a, 2) + Math.pow(b, 2) + Math.pow(c, 2) );
+}
+
+function getData(imudata) {
+    return {
+        x: imudata.accel.x.toFixed(3),
+        y: imudata.accel.y.toFixed(3),
+        z: imudata.accel.z.toFixed(3),
+        pitch: imudata.gyro.x.toFixed(3),
+        roll: imudata.gyro.y.toFixed(3),
+        yaw: imudata.gyro.z.toFixed(3)
     }
+}
+
+function generateScore() {
+    max = {
+        accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z),
+        gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw)
+    };
+    min = {
+        accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z),
+        gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw),
+    };
+
+    session.data.forEach( (el) => {
+        var acc = reduce(el.accel.x, el.accel.y, el.accel.z);
+        var gyr = reduce(el.gyro.pitch, el.gyro.gyro, el.gyro.yaw);
+
+        if (acc < min.accel) { min.accel = acc; }
+        if (gyr < min.gyro) { min.gyro = gyr; }
+        if (acc > max.accel) { max.accel = acc; }
+        if (gyr > max.gyro) { max.gyro = gyr; }
+    });
+
+    console.log('max: ' + max.gyro + ' ' + max.accel);
+    console.log('min: ' + min.gyro + ' ' + min.accel);
+
+    session.data.forEach( (el) => {
+        console.log(min.gyro, max.gyro, max.gyro-min.gyro);
+        console.log( scaleBetween ( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro));
+        el.gyro.score = scaleBetween( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro ).toFixed(2);
+        el.accel.score = scaleBetween( reduce(el.accel.x, el.accel.y, el.accel.z), 0.0, 1.0, min.accel, max.accel ).toFixed(2);
+    })
+
+}
+
+function scaleBetween(unscaledNum, minAllowed, maxAllowed, min, max) {
+    return (maxAllowed - minAllowed) * (unscaledNum - min) / (max - min) + minAllowed;
+}
+
+function shouldPersist(imudata, ts) {
+
+//    if (!hasLocation) {
+//        return false;
+//    }
 
     // if 5 or more seconds have passed since last recorded reading
     // save it
-    if (session.data.length > 0) { 
+    if (session.data.length > 0) {
         if (ts.diff(session.data[session.data.length - 1].timestamp, 'seconds') >= 5) {
             return true;
         }
@@ -91,10 +145,10 @@ function shouldPersist(imudata, ts) {
 
             xdiff = Math.abs(d.accel.x - imudata.accel.x) / d.accel.x;
             ydiff = Math.abs(d.accel.y - imudata.accel.y) / d.accel.y;
-            zdiff = Math.abs(d.accel.z - imudata.accel.z) / d.accel.z; 
+            zdiff = Math.abs(d.accel.z - imudata.accel.z) / d.accel.z;
 
             // if greatest relative difference is > 10% then save
-            maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff); 
+            maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff);
         });
         if (maxdiff > 2.0) {
             return true;
@@ -102,12 +156,15 @@ function shouldPersist(imudata, ts) {
     } else {
         return true;
     }
-        
+
 
     return false;
 }
 
 function exitHandler() {
+
+    generateScore();
+
     clearInterval();
     session['data'].pop(); // remove last element as it may be incomplete
     session['end_time'] = session['data'].slice(-1)[0].timestamp; // set end time
@@ -125,7 +182,7 @@ function getNextFileName() {
     var ch = 'a';
     var path = '/home/pi/shock-tracker/device/sessions/';
     var date = moment().format('YYYY-MM-DD');
-   
+
     function nextFileName() {
         return path + date + ch + '.json';
     }
@@ -154,4 +211,3 @@ process.on('SIGINT', exitHandler.bind(null, {exit:true}));
 //process.on('SIGUSR1', exitHandler.bind(null, {exit:true}));
 //process.on('SIGUSR2', exitHandler.bind(null, {exit:true}));
 //process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
-

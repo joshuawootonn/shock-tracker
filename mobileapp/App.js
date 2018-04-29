@@ -230,36 +230,63 @@ class BluetoothScreen extends React.Component {
     }
   }
 
-  test(peripheral) {
+  async test(peripheral) {
+    var readService = '13333333-3333-3333-3333-333333333338';
+    var writeService = '13333333-3333-3333-3333-333333333337';
+    var readCharacteristic = '00000000-0000-0000-0000-000000009999';
+    var writeCharacteristic = '00000000-0000-0000-0000-000000002a08';
+    var errorService = '00000000-0000-0000-0000-000000000911';
+    var errorCharacteristic = '00000000-0000-0000-0000-000000009911';
+    var dataWrite = "";
+    var longresult = "";
+    var readData = "";
     if (peripheral){
       if (peripheral.connected){
         BleManager.disconnect(peripheral.id);
       }else{
-        BleManager.connect(peripheral.id).then(() => {
-          let peripherals = this.state.peripherals;
-          let p = peripherals.get(peripheral.id);
-          if (p) {
-            p.connected = true;
-            peripherals.set(peripheral.id, p);
-            this.setState({peripherals});
-          }
-          console.log('Connected to ' + peripheral.id);
-
-
-          setTimeout(() => {
-            BleManager.retrieveServices(peripheral.id).then((peripheralInfo) => {
-              //console.log(peripheralInfo);
-              var readService = '13333333-3333-3333-3333-333333333338';
-              var writeService = '13333333-3333-3333-3333-333333333337';
-              var readCharacteristic = '00000000-0000-0000-0000-000000009999';
-              var writeCharacteristic = '00000000-0000-0000-0000-000000002a08';
-              var dataWrite = stringToBytes(this.state.date);
-              var readData;
-              BleManager.write(peripheral.id, writeService, writeCharacteristic, dataWrite)
-              .then(async () => {
-                console.log('Write: ' + dataWrite);
+        var invalid = true;
+        var running = false;
+        //WHILE LOOP BLUETOOTH CONNECTION ERROR WHILE IN TRANSMITION
+        while(invalid)
+        {
+          await BleManager.connect(peripheral.id)
+          .then(async () => {
+            let peripherals = this.state.peripherals;
+            let p = peripherals.get(peripheral.id);
+            if (p) {
+              p.connected = true;
+              peripherals.set(peripheral.id, p);
+              this.setState({peripherals});
+            }
+            console.log('Connected to ' + peripheral.id);
+              await BleManager.retrieveServices(peripheral.id)
+              .then(async (peripheralInfo) => {
+                //console.log(peripheralInfo);
+                if(running == true) {
+                  dataWrite = stringToBytes("ERROR");
+                  await BleManager.write(peripheral.id, errorService, errorCharacteristic, dataWrite)
+                  .then(() => {
+                    console.log('Write:' + dataWrite);
+                  })
+                  .catch(() => {
+                    console.log('WRITE ERROR');
+                  });
+                }
+                else
+                {
+                  longresult = "";
+                  dataWrite = stringToBytes(this.state.date);
+                  await BleManager.write(peripheral.id, writeService, writeCharacteristic, dataWrite)
+                  .then(async () => {
+                    running = true;
+                    console.log('Write: ' + dataWrite);
+                  })
+                  .catch(() => {
+                    console.log('WRITE ERROR');
+                  });
+                }
                 var isnotdone = true;
-                var longresult = "";
+                //WHILE LOOP TO FIND DONE STRING
                 while(isnotdone)
                 {
                   var readPromise = BleManager.read(peripheral.id, readService, readCharacteristic);
@@ -283,22 +310,40 @@ class BluetoothScreen extends React.Component {
                       }
                     }
                   })
-                  .catch((error) => {
+                  .catch(async (error) => {
+                    //READ ERROR
                     console.log(error);
+                    dataWrite = stringToBytes("ERROR");
+                    await BleManager.write(peripheral.id, errorService, errorCharacteristic, dataWrite)
+                    .then(() => {
+                      console.log('Write:' + dataWrite);
+                    })
+                    .catch(() => {
+                      console.log('WRITE ERROR');
+                    });
                   });
                 }
-                console.log(longresult);
-                var convData = JSON.parse(longresult);
-                this.setState(data: convData);
-              })
-              .catch((error) => {
-                console.log(error);
-              });
             });
-          }, 900);
-        }).catch((error) => {
-          console.log('Connection error', error);
-        });
+          }).catch((error) => {
+            //BLUETOOTH DISCONNECTION ERROR
+            console.log('Connection error', error);
+          });
+          //END OF CONNECTION OR JSON RECIEVED
+          try {
+            //TRY TO CONVERT STRING TO JSON
+            console.log(longresult);
+            var convData = JSON.parse(longresult);
+            this.setState({data: convData});
+            //END LOOP CONDITIONS
+            invalid = false;
+            running = false;
+            //TODO: DISCONNECT BLUETOOTH AFTER COMPLETE JSON TRANSFERED
+          }
+          catch (e) {
+            //JSON INCOMPLETE ERROR
+            console.log("INVALID JSON: " + e);
+          }
+        }
       }
     }
   }
@@ -306,7 +351,6 @@ class BluetoothScreen extends React.Component {
   render() {
     const list = Array.from(this.state.peripherals.values());
     const dataSource = ds.cloneWithRows(list);
-
 
     return (
       <View style={blestyles.container}>
@@ -365,11 +409,38 @@ class DetailsScreen extends React.Component {
       markerPosition: {
         latitude: 0,
         longitude: 0
-      }
+      },
+      dangerData: []
     }
   }
 
   watchID: ?number = null
+
+  getDangers() {
+    var lat = this.state.markerPosition.latitude;
+    var long = this.state.markerPosition.longitude;
+    var url = 'http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session/byLocation/'+long+'/'+lat+'/8';
+    console.log(url);
+     var coordarr = [];
+     axios.get(url)
+    .then((getData) => {
+      getData = getData.data;
+      if (getData.length) {
+        getData.forEach(element => { // for each session
+          console.log('Element:' + element);
+
+          element.data.forEach( (d) => { // for each point in the session
+            coordarr.push(coord = <MapView.Marker coordinate={{latitude: d.latitude, longitude: d.longitude}}></MapView.Marker>);
+          });
+        });
+      }
+      this.setState({dangerData: coordarr});
+      console.log(this.state.dangerData);
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  }
 
   componentDidMount() {
     navigator.geolocation.getCurrentPosition((position) => {
@@ -402,6 +473,7 @@ class DetailsScreen extends React.Component {
 
       this.setState({initialPosition: lastRegion})
       this.setState({markerPosition: lastRegion})
+      this.getDangers();
     })
   }
 
@@ -420,6 +492,7 @@ class DetailsScreen extends React.Component {
             coordinate={this.state.markerPosition}
           >
           </MapView.Marker>
+          {this.state.dangerData}
         </MapView>
       </View>
     );
