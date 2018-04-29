@@ -52,18 +52,18 @@ function getReadings() {
         session.data.push({
             timestamp: ts.format(DATE_FORMAT),
             gyro: {
-                pitch: dat.pitch,
-                roll: dat.roll,
-                yaw: dat.yaw,
+                pitch: parseFloat(dat.pitch),
+                roll: parseFloat(dat.roll),
+                yaw: parseFloat(dat.yaw),
             },
             gps: {
-                latitude: lat_reading.toFixed(5),
-                longitude: lon_reading.toFixed(5),
+                latitude: parseFloat(lat_reading.toFixed(5)),
+                longitude: parseFloat(lon_reading.toFixed(5)),
             },
             accel: {
-                x: dat.x,
-                y: dat.y,
-                z: dat.z,
+                x: parseFloat(dat.x),
+                y: parseFloat(dat.y),
+                z: parseFloat(dat.z),
             }
         });
     }
@@ -104,9 +104,14 @@ function generateScore() {
         if (gyr > max.gyro) { max.gyro = gyr; }
     });
 
+    console.log('max: ' + max.gyro + ' ' + max.accel);
+    console.log('min: ' + min.gyro + ' ' + min.accel);
+
     session.data.forEach( (el) => {
-        el.gyro.score = scaleBetween( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro);
-        el.accel.score = scaleBetween( reduce(el.accel.x, el.accel.y, el.accel.z), 0.0, 1.0, min.accel, max.accel);
+        console.log(min.gyro, max.gyro, max.gyro-min.gyro);
+        console.log( scaleBetween ( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro));
+        el.gyro.score = scaleBetween( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro ).toFixed(2);
+        el.accel.score = scaleBetween( reduce(el.accel.x, el.accel.y, el.accel.z), 0.0, 1.0, min.accel, max.accel ).toFixed(2);
     })
 
 }
