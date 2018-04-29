@@ -76,9 +76,9 @@ function getData(imudata) {
         x: imudata.accel.x.toFixed(3),
         y: imudata.accel.y.toFixed(3),
         z: imudata.accel.z.toFixed(3)
-        pitch: imudata.gyro.x.toFixed(3),
-        roll: imudata.gyro.y.toFixed(3),
-        yaw: imudata.gyro.z.toFixed(3)
+        pitch: imudata.gyro.pitch.toFixed(3),
+        roll: imudata.gyro.roll.toFixed(3),
+        yaw: imudata.gyro.yaw.toFixed(3)
     }
 }
 
@@ -94,7 +94,7 @@ function generateScore() {
 
     session.data.forEach( (el) => {
         var acc = reduce(el.accel.x, el.accel.y, el.accel.z);
-        var gyr = reduce(el.gyro.x, el.gyro.y, el.gyro.z);
+        var gyr = reduce(el.gyro.pitch, el.gyro.gyro, el.gyro.yaw);
 
         if (acc < min.accel) { min.accel = acc; }
         if (gyr < min.gyro) { min.gyro = gyr; }
