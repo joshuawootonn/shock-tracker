@@ -19,6 +19,8 @@ var dataTotalSize = 0;
 var readfailed = false;
 var lastbytes = '';
 
+var totaldata = '';
+
 
 var dateTimeCh = new BlenoCharacteristic({
     uuid: '0x2A08',
@@ -53,13 +55,53 @@ var errorCh = new BlenoCharacteristic({
     }
 });
 
+var fixCh = new BlenoCharacteristic({
+    uuid: '0x7777', 
+    properties: ['read'],
+    descriptors: [
+        new BlenoDescriptor({
+            uuid: '0x7777',
+            value: 'fix'
+        })
+    ],
+
+    onReadRequest: function (offset, callback) {
+        callback(this.RESULT_SUCCESS, Buffer.from('fix'));
+    }
+});
+
+var verifyCh = new BlenoCharacteristic({
+    uuid: '0x4444',
+    properties: ['write'],
+    descriptors: [
+        new BlenoDescriptor({
+            uuid: '0x4444'
+        })
+    ],
+
+    onWriteRequest: function (data,offset,withoutResponse,callback) {
+        
+        console.log('aligning to: ' + data.toString());
+
+        if (data.toString().length != 20) { callback(this.RESULT_SUCCESS); }
+
+        for (var i = 0; i < totaldata.length - 20; i+=20) {
+            if (totaldata.slice(i, i+20) == data.toString()) {
+                console.log('found alignment');
+                filedata = totaldata.slice(i+20);
+                callback(this.RESULT_SUCCESS);
+            }
+        }
+    }
+});
+
+
 var transferCh = new BlenoCharacteristic ({
     uuid: '0x9999',
     properties: ['read'],
     descriptors: [
         new BlenoDescriptor({
-            uuid: '0x2AAE',
-            value: 'latitude',
+            uuid: '0x9999',
         })
     ],
 
@@ -68,7 +110,8 @@ var transferCh = new BlenoCharacteristic ({
         try {
             if ( filedata == null && !readfailed ) {
                 console.log('reading new file');
-                filedata = readFile();
+                totaldata = readFile();
+                filedata = totaldata
             } else if ( filedata == '' ) {
                 if ( readfailed ) {
                     console.log('read failed!');
@@ -170,7 +213,7 @@ bleno.on('advertisingStart', function(error) {
         bleno.setServices([
             new BlenoPrimaryService({
                 uuid: '13333333-3333-3333-3333-333333333337',
-                characteristics: [ dateTimeCh ]
+                characteristics: [ dateTimeCh, verifyCh ]
             }),
             new BlenoPrimaryService({
                 uuid: '13333333-3333-3333-3333-333333333338',
@@ -178,7 +221,7 @@ bleno.on('advertisingStart', function(error) {
             }),
             new BlenoPrimaryService({
                 uuid: '00000000-0000-0000-0000-000000000911',
-                characteristics: [ errorCh ]
+                characteristics: [ errorCh, fixCh ]
             })
         ]);
     }

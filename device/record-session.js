@@ -3,6 +3,7 @@ var moment = require('moment');
 var fs = require('fs');
 var jsonfile = require('jsonfile');
 var serialport = require('serialport');
+var led = require('sense-hat-led').sync;
 //var sensejoystick = require('sense-joystick');
 var IMU = new nodeimu.IMU();
 var serial = new serialport('/dev/ttyUSB0', { baudRate: 115200 });
@@ -26,13 +27,15 @@ serial.on('open', function() {
     console.log('Serial connection opened');
     serial.on('data', function(data) {
         hasLocation = true;
-        console.log('data.toString(): ' + data.toString());
+        led.setPixel(0, 1, [0, 255, 0], (err) => {});
         latlon = data.toString().split(',');
         console.log(latlon[0] + ',' + latlon[1]);
         lat_reading = parseFloat(latlon[0]);
         lon_reading = parseFloat(latlon[1]);
     });
 });
+
+led.setPixel(0, 0, [255, 0, 0], (err) => {});
 
 //sensejoystick.getJoystick()
 //.then((joystick) => {
@@ -93,26 +96,22 @@ function generateScore() {
         accel: reduce(session.data[0].accel.x, session.data[0].accel.y, session.data[0].accel.z),
         gyro: reduce(session.data[0].gyro.pitch, session.data[0].gyro.roll, session.data[0].gyro.yaw),
     };
-
+ 
     session.data.forEach( (el) => {
         var acc = reduce(el.accel.x, el.accel.y, el.accel.z);
-        var gyr = reduce(el.gyro.pitch, el.gyro.gyro, el.gyro.yaw);
+        var gyr = reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw);
 
         if (acc < min.accel) { min.accel = acc; }
         if (gyr < min.gyro) { min.gyro = gyr; }
         if (acc > max.accel) { max.accel = acc; }
         if (gyr > max.gyro) { max.gyro = gyr; }
+
     });
 
-    console.log('max: ' + max.gyro + ' ' + max.accel);
-    console.log('min: ' + min.gyro + ' ' + min.accel);
-
     session.data.forEach( (el) => {
-        console.log(min.gyro, max.gyro, max.gyro-min.gyro);
-        console.log( scaleBetween ( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro));
-        el.gyro.score = scaleBetween( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro ).toFixed(2);
-        el.accel.score = scaleBetween( reduce(el.accel.x, el.accel.y, el.accel.z), 0.0, 1.0, min.accel, max.accel ).toFixed(2);
-    })
+        el.gyro.score = parseFloat( scaleBetween( reduce(el.gyro.pitch, el.gyro.roll, el.gyro.yaw), 0.0, 1.0, min.gyro, max.gyro ).toFixed(2) );
+        el.accel.score = parseFloat( scaleBetween( reduce(el.accel.x, el.accel.y, el.accel.z), 0.0, 1.0, min.accel, max.accel ).toFixed(2) );
+    });
 
 }
 
@@ -122,9 +121,9 @@ function scaleBetween(unscaledNum, minAllowed, maxAllowed, min, max) {
 
 function shouldPersist(imudata, ts) {
 
-//    if (!hasLocation) {
-//        return false;
-//    }
+    if (!hasLocation) {
+        return false;
+    }
 
     // if 5 or more seconds have passed since last recorded reading
     // save it
@@ -150,7 +149,7 @@ function shouldPersist(imudata, ts) {
             // if greatest relative difference is > 10% then save
             maxdiff = Math.max(pitchDiff, rollDiff, yawDiff, xdiff, ydiff, zdiff);
         });
-        if (maxdiff > 2.0) {
+        if (maxdiff > 1.8) {
             return true;
         }
     } else {
@@ -163,6 +162,7 @@ function shouldPersist(imudata, ts) {
 
 function exitHandler() {
 
+    led.clear();
     generateScore();
 
     clearInterval();
@@ -203,7 +203,7 @@ function getNextFileName() {
 }
 
 // call getReadings every second
-setInterval(getReadings, 3000);
+setInterval(getReadings, 2000);
 
 // call exitHandler on program exit
 //process.on('exit', exitHandler.bind(null, {cleanup:true}));
