@@ -3,6 +3,7 @@ var moment = require('moment');
 var fs = require('fs');
 var jsonfile = require('jsonfile');
 var serialport = require('serialport');
+var led = require('sense-hat-led').sync;
 //var sensejoystick = require('sense-joystick');
 var IMU = new nodeimu.IMU();
 var serial = new serialport('/dev/ttyUSB0', { baudRate: 115200 });
@@ -26,12 +27,15 @@ serial.on('open', function() {
     console.log('Serial connection opened');
     serial.on('data', function(data) {
         hasLocation = true;
+        led.setPixel(0, 1, [0, 255, 0], (err) => {});
         latlon = data.toString().split(',');
         console.log(latlon[0] + ',' + latlon[1]);
         lat_reading = parseFloat(latlon[0]);
         lon_reading = parseFloat(latlon[1]);
     });
 });
+
+led.setPixel(0, 0, [255, 0, 0], (err) => {});
 
 //sensejoystick.getJoystick()
 //.then((joystick) => {
@@ -117,9 +121,9 @@ function scaleBetween(unscaledNum, minAllowed, maxAllowed, min, max) {
 
 function shouldPersist(imudata, ts) {
 
-//    if (!hasLocation) {
-//        return false;
-//    }
+    if (!hasLocation) {
+        return false;
+    }
 
     // if 5 or more seconds have passed since last recorded reading
     // save it
@@ -158,6 +162,7 @@ function shouldPersist(imudata, ts) {
 
 function exitHandler() {
 
+    led.clear();
     generateScore();
 
     clearInterval();
