@@ -23,6 +23,7 @@ import MapView from 'react-native-maps';
 import BleManager from 'react-native-ble-manager';
 import { stringToBytes, bytesToString } from 'convert-string';
 import axios from 'axios';
+import Swiper from 'react-native-swiper';
 
 import Buffer from 'buffer';
 
@@ -30,8 +31,9 @@ const {width, height} = Dimensions.get('window')
 const SCREEN_HEIGHT = height
 const SCREEN_WIDTH = width
 const ASPECT_RATIO = width / height
-const LATTITUDE_DELTA = 0.02
+const LATTITUDE_DELTA = 0.01
 const LONGTITUDE_DELTA = LATTITUDE_DELTA * ASPECT_RATIO
+const color = '#009688';
 
 const window = Dimensions.get('window');
 const ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
@@ -44,49 +46,35 @@ export default class App extends React.Component {
   }
 }
 
-class HomeScreen extends React.Component {
-
+class DetailsScreen extends React.Component {
+  
   static navigationOptions = {
-    title: 'Home',
-  }
-
-  render() {
-    return (
-        <View style={styles.container}>
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Bluetooth"
-              onPress={() => this.props.navigation.navigate('Bluetooth')}
-            />
-          </View>
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Map"
-              onPress={() => this.props.navigation.navigate('Details')}
-            />
-            <View style={styles.buttonContainer}>
-            </View>
-          </View>
-        </View>
-    );
-  }
-}
-
-class BluetoothScreen extends React.Component {
-
-  static navigationOptions = {
-    title: 'Bluetooth',
+    title: 'Map',
+    header: null
   };
 
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
 
     this.state = {
+      initialPosition: {
+        latitude: 0,
+        longitude: 0,
+        latitudeDelta: 0,
+        longitudeDelta: 0
+      },
+      markerPosition: {
+        latitude: 0,
+        longitude: 0
+      },
+      dangerData: [],
+      view: true,
       scanning:false,
       date: "2000-01-01 00:00:00",
       peripherals: new Map(),
       appState: '',
-      data: {}
+      data: {},
+      sycnReady: "#ccc"
     }
 
     this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
@@ -96,8 +84,11 @@ class BluetoothScreen extends React.Component {
     this.handleAppStateChange = this.handleAppStateChange.bind(this);
   }
 
+  watchID: ?number = null
+
   dataSync() {
     //this.syncDate();
+    this.setState({sycnReady: "#ccc"});
     console.log(this.state.data);
     axios.post("http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session", this.state.data)
     .then(() => {
@@ -115,52 +106,6 @@ class BluetoothScreen extends React.Component {
     //AsyncStorage.setItem("lastSync", value);
   }
 
-  componentDidMount() {
-
-    AsyncStorage.getItem("lastSync", (error, value) => {
-      if(!error) {
-        if(value !== null) {
-
-          this.setState({date: value});
-        }
-        else
-        {
-          this.setState({date: "2000-01-01 00:00:00"});
-        }
-        //console.log(this.state.date);
-      }
-    });
-
-
-    AppState.addEventListener('change', this.handleAppStateChange);
-
-    BleManager.start({showAlert: false});
-
-    this.handlerDiscover = bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', this.handleDiscoverPeripheral );
-    this.handlerStop = bleManagerEmitter.addListener('BleManagerStopScan', this.handleStopScan );
-    this.handlerDisconnect = bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectedPeripheral );
-    this.handlerUpdate = bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', this.handleUpdateValueForCharacteristic );
-
-
-
-    if (Platform.OS === 'android' && Platform.Version >= 23) {
-        PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION).then((result) => {
-            if (result) {
-              console.log("Permission is OK");
-            } else {
-              PermissionsAndroid.requestPermission(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION).then((result) => {
-                if (result) {
-                  console.log("User accept");
-                } else {
-                  console.log("User refuse");
-                }
-              });
-            }
-      });
-    }
-
-  }
-
   handleAppStateChange(nextAppState) {
     if (this.state.appState.match(/inactive|background/) && nextAppState === 'active') {
       console.log('App has come to the foreground!')
@@ -169,13 +114,6 @@ class BluetoothScreen extends React.Component {
       });
     }
     this.setState({appState: nextAppState});
-  }
-
-  componentWillUnmount() {
-    this.handlerDiscover.remove();
-    this.handlerStop.remove();
-    this.handlerDisconnect.remove();
-    this.handlerUpdate.remove();
   }
 
   handleDisconnectedPeripheral(data) {
@@ -363,6 +301,7 @@ class BluetoothScreen extends React.Component {
             //END LOOP CONDITIONS
             invalid = false;
             running = false;
+            this.setState({sycnReady: "#ABCDEF"});
             //TODO: DISCONNECT BLUETOOTH AFTER COMPLETE JSON TRANSFERED
           }
           catch (e) {
@@ -374,78 +313,10 @@ class BluetoothScreen extends React.Component {
     }
   }
 
-  render() {
-    const list = Array.from(this.state.peripherals.values());
-    const dataSource = ds.cloneWithRows(list);
-
-    return (
-      <View style={blestyles.container}>
-        <TouchableHighlight style={{marginTop: 40,margin: 20, padding:20, backgroundColor:'#ccc'}} underlayColor={'#abcdef'} onPress={() => this.startScan() }>
-          <Text>Scan Bluetooth ({this.state.scanning ? 'on' : 'off'})</Text>
-        </TouchableHighlight>
-        <TouchableHighlight style={{marginTop: 0,margin: 20, padding:20, backgroundColor:'#ccc'}} underlayColor={'#abcdef'} onPress={() => this.retrieveConnected() }>
-          <Text>Retrieve connected peripherals</Text>
-        </TouchableHighlight>
-        <ScrollView style={blestyles.scroll}>
-          {(list.length == 0) &&
-            <View style={{flex:1, margin: 20}}>
-              <Text style={{textAlign: 'center'}}>No peripherals</Text>
-            </View>
-          }
-          <ListView
-            enableEmptySections={true}
-            dataSource={dataSource}
-            renderRow={(item) => {
-              const color = item.connected ? 'green' : '#fff';
-              return (
-                <TouchableHighlight onPress={() => this.test(item) }>
-                  <View style={[blestyles.row, {backgroundColor: color}]}>
-                    <Text style={{fontSize: 12, textAlign: 'center', color: '#333333', padding: 10}}>{item.name}</Text>
-                    <Text style={{fontSize: 8, textAlign: 'center', color: '#333333', padding: 10}}>{item.id}</Text>
-                  </View>
-                </TouchableHighlight>
-              );
-            }}
-          />
-        </ScrollView>
-        <TouchableHighlight style={{marginTop: 0,margin: 20, padding:20, backgroundColor:'#ccc'}} underlayColor={'#abcdef'} onPress={() => this.dataSync() }>
-          <Text>Sync</Text>
-        </TouchableHighlight>
-      </View>
-    );
-  }
-}
-
-class DetailsScreen extends React.Component {
-  
-  static navigationOptions = {
-    title: 'Map',
-  };
-
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      initialPosition: {
-        latitude: 0,
-        longitude: 0,
-        latitudeDelta: 0,
-        longitudeDelta: 0
-      },
-      markerPosition: {
-        latitude: 0,
-        longitude: 0
-      },
-      dangerData: []
-    }
-  }
-
-  watchID: ?number = null
-
   getDangers() {
     var lat = this.state.markerPosition.latitude;
     var long = this.state.markerPosition.longitude;
-    var url = 'http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session/byLocation/'+long+'/'+lat+'/8';
+    var url = 'http://iot4-env-1.us-east-1.elasticbeanstalk.com/api/session/byLocation/'+long+'/'+lat+'/2';
     console.log('URL: ' + url);
      var coordarr = [];
      axios.get(url)
@@ -456,7 +327,13 @@ class DetailsScreen extends React.Component {
           //console.log('Element:' + element);
 
           element.data.forEach( (d) => { // for each point in the session
-            coordarr.push(coord = <MapView.Marker coordinate={{latitude: d.latitude, longitude: d.longitude}}></MapView.Marker>);
+            if(this.state.view == true) {
+              coordarr.push(coord = <MapView.Marker coordinate={{latitude: d.latitude, longitude: d.longitude}} pinColor={this.colorScale(d.speed_score)}></MapView.Marker>);
+            }
+            else
+            {
+              coordarr.push(coord = <MapView.Marker coordinate={{latitude: d.latitude, longitude: d.longitude}} pinColor={this.colorScale(d.accel_score)}></MapView.Marker>);
+            }
           });
         });
       }
@@ -468,7 +345,102 @@ class DetailsScreen extends React.Component {
     });
   }
 
+  switchView() {
+    if(this.state.view == true)
+    {
+      this.setState({view: false});
+    }
+    else
+    {
+      this.setState({view: true});
+    }
+    this.getDangers();
+  }
+
+  colorScale(dangerScore) {
+    //0-9 to A-F (16 Shades)
+    dangerScore = Math.ceil(dangerScore * 16);
+    var color = '#FF';
+    if(dangerScore < 3)
+    {
+      color = '#00A';
+    }
+    else if(dangerScore < 10)
+    {
+      color = color + dangerScore;
+    }
+    else if(dangerScore == 11)
+    {
+      color = color + 'A';
+    }
+    else if(dangerScore == 12)
+    {
+      color = color + 'B';
+    }
+    else if(dangerScore == 13)
+    {
+      color = color + 'C';
+    }
+    else if(dangerScore == 14)
+    {
+      color = color + 'D';
+    }
+    else if(dangerScore == 15)
+    {
+      color = color + 'E';
+    }
+    else
+    {
+      color = color + 'F';
+    }
+    color = color + '000';
+    return color;
+  }
+
   componentDidMount() {
+
+    AsyncStorage.getItem("lastSync", (error, value) => {
+      if(!error) {
+        if(value !== null) {
+
+          this.setState({date: value});
+        }
+        else
+        {
+          this.setState({date: "2000-01-01 00:00:00"});
+        }
+        //console.log(this.state.date);
+      }
+    });
+
+
+    AppState.addEventListener('change', this.handleAppStateChange);
+
+    BleManager.start({showAlert: false});
+
+    this.handlerDiscover = bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', this.handleDiscoverPeripheral );
+    this.handlerStop = bleManagerEmitter.addListener('BleManagerStopScan', this.handleStopScan );
+    this.handlerDisconnect = bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectedPeripheral );
+    this.handlerUpdate = bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', this.handleUpdateValueForCharacteristic );
+
+
+
+    if (Platform.OS === 'android' && Platform.Version >= 23) {
+        PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION).then((result) => {
+            if (result) {
+              console.log("Permission is OK");
+            } else {
+              PermissionsAndroid.requestPermission(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION).then((result) => {
+                if (result) {
+                  console.log("User accept");
+                } else {
+                  console.log("User refuse");
+                }
+              });
+            }
+      });
+    }
+
     navigator.geolocation.getCurrentPosition((position) => {
       var lat = parseFloat(position.coords.latitude)
       var long = parseFloat(position.coords.longitude)
@@ -505,40 +477,80 @@ class DetailsScreen extends React.Component {
 
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchID)
+    this.handlerDiscover.remove();
+    this.handlerStop.remove();
+    this.handlerDisconnect.remove();
+    this.handlerUpdate.remove();
   }
 
   render() {
+    const list = Array.from(this.state.peripherals.values());
+    const dataSource = ds.cloneWithRows(list);
+
     return (
-      <View style={styles.mapContainer}>
-        <MapView
-          style={styles.map}
-          region={this.state.initialPosition}
-        >
-          <MapView.Marker
-            coordinate={this.state.markerPosition}
+      <Swiper showsButtons={true} showsPagination={false} loop={false}>
+        <View style={styles.mapContainer}>
+          <MapView
+            style={styles.map}
+            region={this.state.initialPosition}
           >
-          </MapView.Marker>
-          {this.state.dangerData}
-        </MapView>
-      </View>
+            <MapView.Marker
+              coordinate={this.state.markerPosition}
+              pinColor={color}
+            >
+            </MapView.Marker>
+            {this.state.dangerData}
+          </MapView>
+          <TouchableHighlight style={{marginTop: 40,margin: 20, padding:20, backgroundColor:'#ccc', opacity: 0.75}} underlayColor={'#abcdef'} onPress={() => this.switchView()}>
+            <Text>{this.state.view ? 'Speed' : 'Acceleration'}</Text>
+          </TouchableHighlight>
+        </View>
+        <View style={blestyles.container}>
+          <TouchableHighlight style={{marginTop: 40,margin: 20, padding:20, backgroundColor:'#ccc'}} underlayColor={'#abcdef'} onPress={() => this.startScan() }>
+            <Text>Scan Bluetooth ({this.state.scanning ? 'on' : 'off'})</Text>
+          </TouchableHighlight>
+          <TouchableHighlight style={{marginTop: 0,margin: 20, padding:20, backgroundColor:'#ccc'}} underlayColor={'#abcdef'} onPress={() => this.retrieveConnected() }>
+            <Text>Retrieve connected peripherals</Text>
+          </TouchableHighlight>
+          <ScrollView style={blestyles.scroll}>
+            {(list.length == 0) &&
+              <View style={{flex:1, margin: 20}}>
+                <Text style={{textAlign: 'center'}}>No peripherals</Text>
+              </View>
+            }
+            <ListView
+              enableEmptySections={true}
+              dataSource={dataSource}
+              renderRow={(item) => {
+                const color = item.connected ? 'green' : '#fff';
+                return (
+                  <TouchableHighlight onPress={() => this.test(item) }>
+                    <View style={[blestyles.row, {backgroundColor: color}]}>
+                      <Text style={{fontSize: 12, textAlign: 'center', color: '#333333', padding: 10}}>{item.name}</Text>
+                      <Text style={{fontSize: 8, textAlign: 'center', color: '#333333', padding: 10}}>{item.id}</Text>
+                    </View>
+                  </TouchableHighlight>
+                );
+              }}
+            />
+          </ScrollView>
+          <TouchableHighlight style={{marginTop: 0,margin: 20, padding:20, backgroundColor:this.state.sycnReady}} underlayColor={'#00adef'} onPress={() => this.dataSync() }>
+            <Text>Sync</Text>
+          </TouchableHighlight>
+        </View>
+      </Swiper>
     );
   }
 }
 
 const RootStack = StackNavigator(
   {
-    Home: {
-      screen: HomeScreen,
-    },
     Details: {
       screen: DetailsScreen,
     },
-    Bluetooth: {
-      screen: BluetoothScreen,
-    },
   },
   {
-    initialRouteName: 'Home',
+    initialRouteName: 'Details',
   }
 );
 
@@ -549,6 +561,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     margin: 10
+  },
+  buttonText: {
+    fontSize: 25,
   },
   mapContainer: {
     position: 'absolute',
